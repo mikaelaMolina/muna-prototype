@@ -1,0 +1,9 @@
+# Local leftovers and editor/OS files
+.done
+**/.done
+.DS_Store
+Thumbs.db
+.vscode/
+.vercel/
+_*.js
+_*.sh

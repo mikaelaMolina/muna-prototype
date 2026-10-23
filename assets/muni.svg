@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 40 545 580" width="545" height="580" role="img" aria-labelledby="title desc">
+  <title id="title">Muni, the Muna mascot</title>
+  <desc id="desc">A floating yellow thought-spirit with a coral graduation cap, shiny eyes, pink cheeks, and one hand waving.</desc>
+
+  <!-- Waving arm (behind the body) -->
+  <path d="M 178 372 C 128 366, 96 318, 108 282 C 120 250, 160 256, 172 290 C 178 312, 184 336, 196 352 Z"
+        fill="#F7D449" stroke="#1F2B5B" stroke-width="13"/>
+  <path d="M 124 282 C 132 268, 150 270, 156 290" fill="none" stroke="#FFFFFF" stroke-width="8"
+        stroke-linecap="round" stroke-opacity="0.7"/>
+
+  <!-- Body: shade tone with outline, then the lighter face tone inset toward the top-left -->
+  <path d="M 150 300 C 150 150, 250 90, 320 90 C 430 90, 490 180, 485 300
+           C 482 400, 500 470, 540 520 C 555 540, 540 565, 515 560
+           C 500 585, 470 590, 450 570 C 430 600, 395 600, 380 575
+           C 355 600, 315 598, 300 570 C 270 590, 230 580, 225 550
+           C 190 540, 170 500, 165 450 C 158 400, 150 350, 150 300 Z"
+        fill="#E8B530" stroke="#1F2B5B" stroke-width="14"/>
+  <path d="M 164 300 C 164 162, 258 104, 320 104 C 420 104, 466 188, 462 300
+           C 459 392, 470 452, 498 502 C 472 524, 440 540, 400 546
+           C 350 552, 282 548, 240 530 C 204 510, 186 470, 178 430
+           C 170 380, 164 340, 164 300 Z"
+        fill="#F7D449"/>
+  <!-- Tail wave lines -->
+  <g fill="none" stroke="#1F2B5B" stroke-width="9" stroke-linecap="round">
+    <path d="M 450 570 C 446 556, 446 546, 452 536"/>
+    <path d="M 380 575 C 376 562, 376 552, 382 544"/>
+  </g>
+  <!-- Shine -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-opacity="0.8">
+    <path d="M 196 250 C 204 196, 236 160, 274 146" stroke-width="14"/>
+    <path d="M 190 290 L 190 300" stroke-width="14"/>
+  </g>
+
+  <!-- Graduation cap -->
+  <path d="M 262 138 L 262 176 C 306 200, 370 198, 408 170 L 408 130 Z"
+        fill="#C4433A" stroke="#1F2B5B" stroke-width="12"/>
+  <path d="M 222 124 L 334 72 L 452 116 L 340 168 Z" fill="#E8594F" stroke="#1F2B5B" stroke-width="12"/>
+  <path d="M 262 120 L 334 88" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-opacity="0.6"/>
+  <path d="M 337 118 L 436 136 L 440 188" fill="none" stroke="#1F2B5B" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="337" cy="118" r="11" fill="#1F2B5B"/>
+  <ellipse cx="440" cy="198" rx="13" ry="17" fill="#F7D449" stroke="#1F2B5B" stroke-width="8"/>
+
+  <!-- Eyes -->
+  <ellipse cx="262" cy="282" rx="27" ry="33" fill="#1F2B5B"/>
+  <ellipse cx="388" cy="282" rx="27" ry="33" fill="#1F2B5B"/>
+  <circle cx="271" cy="270" r="11" fill="#FFFFFF"/>
+  <circle cx="397" cy="270" r="11" fill="#FFFFFF"/>
+  <circle cx="254" cy="296" r="4.5" fill="#FFFFFF" fill-opacity="0.8"/>
+  <circle cx="380" cy="296" r="4.5" fill="#FFFFFF" fill-opacity="0.8"/>
+
+  <!-- Cheeks -->
+  <ellipse cx="218" cy="340" rx="26" ry="14" fill="#F59AAE"/>
+  <ellipse cx="432" cy="340" rx="26" ry="14" fill="#F59AAE"/>
+
+  <!-- Tongue and "w" smile -->
+  <path d="M 312 334 C 310 366, 340 366, 338 334 Z" fill="#F27A8F" stroke="#1F2B5B" stroke-width="7"/>
+  <path d="M 294 324 Q 309 342 325 326 Q 341 342 356 324" fill="none" stroke="#1F2B5B" stroke-width="8"
+        stroke-linecap="round"/>
+
+  <!-- REST-HAND -->
+  <ellipse cx="482" cy="436" rx="33" ry="29" fill="#F7D449" stroke="#1F2B5B" stroke-width="12"/>
+  <path d="M 466 424 C 472 416, 484 414, 494 418" fill="none" stroke="#FFFFFF" stroke-width="7"
+        stroke-linecap="round" stroke-opacity="0.7"/>
+  <!-- /REST-HAND -->
+
+  <!-- SPARKLE -->
+  <path d="M 540 150 C 544 176, 550 182, 576 186 C 550 190, 544 196, 540 222 C 536 196, 530 190, 504 186
+           C 530 182, 536 176, 540 150 Z" fill="#F7D449" stroke="#1F2B5B" stroke-width="8"/>
+  <circle cx="520" cy="252" r="9" fill="#E8594F"/>
+  <!-- /SPARKLE -->
+</svg>

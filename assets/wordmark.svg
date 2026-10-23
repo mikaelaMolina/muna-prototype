@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 60 1700 360" width="1700" height="360" role="img" aria-labelledby="title desc">
+  <title id="title">muna.</title>
+  <desc id="desc">The word muna in bubbly coral letters, followed by a yellow dot with yellow rays.</desc>
+
+  <defs>
+    <!-- Each letter is one thick rounded stroke, drawn in the same style as the logo "m". -->
+    <g id="letters" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- m: curved swoosh on the left, two round humps -->
+      <path d="M 58 318 C 118 322, 116 176, 212 170 C 276 166, 306 214, 306 318
+               C 306 214, 336 164, 402 168 C 482 172, 504 236, 500 318"/>
+      <!-- u: rounded bowl with the right stem down to the baseline -->
+      <path d="M 622 178 L 622 236 C 622 300, 660 322, 716 322 C 772 322, 812 296, 812 250"/>
+      <path d="M 812 178 L 812 318"/>
+      <!-- n: one round hump -->
+      <path d="M 934 318 C 934 214, 962 166, 1028 168 C 1094 170, 1124 214, 1124 318"/>
+      <!-- a: round bowl plus a stem -->
+      <path d="M 1246 246 A 80 80 0 1 0 1406 246 A 80 80 0 1 0 1246 246"/>
+      <path d="M 1406 178 L 1406 318"/>
+    </g>
+  </defs>
+
+  <!-- Dark sticker outline (all letters at once, so touching parts merge smoothly) -->
+  <use href="#letters" transform="translate(0 16)" stroke="#1C1C1E" stroke-width="112"/>
+  <use href="#letters" stroke="#1C1C1E" stroke-width="112"/>
+
+  <!-- 3D lip, then the coral face -->
+  <use href="#letters" transform="translate(0 16)" stroke="#C4433A" stroke-width="94"/>
+  <use href="#letters" stroke="#E8594F" stroke-width="94"/>
+
+  <!-- Shine highlights -->
+  <g fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-linecap="round" stroke-width="13">
+    <path d="M 104 262 C 116 222, 136 196, 170 180"/>
+    <path d="M 424 140 C 446 142, 466 152, 480 168"/>
+    <path d="M 600 170 L 600 236"/>
+    <path d="M 912 250 C 914 214, 928 186, 952 170"/>
+    <path d="M 1270 196 C 1284 180, 1302 172, 1322 170"/>
+  </g>
+
+  <!-- Yellow dot -->
+  <circle cx="1540" cy="332" r="57" fill="#1C1C1E"/>
+  <circle cx="1540" cy="318" r="57" fill="#1C1C1E"/>
+  <circle cx="1540" cy="332" r="48" fill="#D9B32A"/>
+  <circle cx="1540" cy="318" r="48" fill="#F7D449"/>
+  <path d="M 1515 303 A 29 29 0 0 1 1534 288" fill="none" stroke="#FFFFFF" stroke-opacity="0.75"
+        stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Yellow rays -->
+  <g stroke="#F7D449" stroke-linecap="round" stroke-width="12">
+    <path d="M 1500 150 L 1530 116"/>
+    <path d="M 1534 190 L 1576 178"/>
+    <path d="M 1550 234 L 1588 246"/>
+  </g>
+</svg>
