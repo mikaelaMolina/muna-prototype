@@ -43,7 +43,17 @@ a { color: var(--deep); }
 .navlinks a:hover { color: var(--ink); background: var(--page); }
 .navlinks a[aria-current=page] { color: var(--ink); background: var(--blush); }
 .navlinks .count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: var(--coral); color: #fff; font-size: 11px; font-weight: 800; }
-.navright { display: flex; align-items: center; gap: 8px; flex: none; }
+.navright { display: flex; align-items: center; gap: 8px; flex: none; margin-left: auto; }
+.navright #timer:empty { display: none; }
+/* small phones: tighter bar and a shorter "Join" label so everything stays on one line */
+.join-btn .short { display: none; }
+@media (max-width: 440px) {
+  .topbar { gap: 8px; }
+  .brand img { height: 22px; }
+  .navright { gap: 6px; }
+  .navright .btn.sm { padding-left: 12px; padding-right: 12px; }
+  .join-btn .long { display: none; } .join-btn .short { display: inline; }
+}
 .timer { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; background: var(--cream); padding: 6px 12px; border-radius: 99px; white-space: nowrap; }
 .me { display: flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px 4px 4px; cursor: pointer; font-weight: 700; font-size: 14px; }
 .me .avatar { width: 32px; height: 32px; font-size: 12px; border-width: 0; }

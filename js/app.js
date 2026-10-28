@@ -96,7 +96,7 @@ function renderTopbar(route) {
   const name = role === 'teacher' ? DB.teacher?.name : stu?.name;
   $('#navright').innerHTML = `<span id="timer"></span>${themeButton()}` + (signedIn
     ? `<button class="me" data-act="toggleMenu" aria-haspopup="true" aria-expanded="false" id="meBtn"><span class="avatar" aria-hidden="true">${esc(initials(name))}</span><span class="name">${esc(name)}</span></button>`
-    : `<a class="btn ghost sm" href="#/start/student">Join a class</a><a class="btn sm" href="#/start">Sign in</a>`);
+    : `<a class="btn ghost sm join-btn" href="#/start/student" aria-label="Join a class"><span class="long">Join a class</span><span class="short">Join</span></a><a class="btn sm" href="#/start">Sign in</a>`);
   updateTimer();
 }
 function closeMenu() { const m = $('#menu'); if (m) m.remove(); const b = $('#meBtn'); if (b) b.setAttribute('aria-expanded', 'false'); }
@@ -104,7 +104,7 @@ document.addEventListener('click', e => { if ($('#menu') && !e.target.closest('#
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#menu')) { closeMenu(); $('#meBtn')?.focus(); } });
 
 /* ---------------------------------------------------------------- light / dark theme
-   The choice is saved on this device. With no saved choice, Muna follows the system setting.
+   The choice is saved on this device. With no saved choice, Muna uses light mode.
    index.html sets data-theme before the page paints, so there is no flash of the wrong theme. */
 const THEME_KEY = 'muna-theme';
 const isDark = () => document.documentElement.dataset.theme === 'dark';
@@ -127,10 +127,6 @@ ACT.toggleTheme = () => {
   try { localStorage.setItem(THEME_KEY, t); } catch { /* private mode: still switch for this visit */ }
   applyTheme(t); swapThemeButtons();
 };
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  const s = savedTheme();
-  if (s !== 'light' && s !== 'dark') { applyTheme(e.matches ? 'dark' : 'light'); swapThemeButtons(); }
-});
 applyTheme(isDark() ? 'dark' : 'light');
 
 /* ---------------------------------------------------------------- live timer in the top bar
