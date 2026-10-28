@@ -8,9 +8,9 @@ const DATA_VERSION = 1;
 const COLLECTIONS = ['classes', 'students', 'assignments', 'submissions', 'games'];
 
 const RULES = {
-  prohibited: { label: 'AI prohibited', icon: '⛔', desc: 'Students do the whole task without AI tools.' },
-  allowed: { label: 'AI allowed for specific roles', icon: '🧭', desc: 'Students may use AI only for the roles you pick.' },
-  required: { label: 'AI required', icon: '🤖', desc: 'Students must use AI for the roles you pick, then show how.' }
+  prohibited: { label: 'AI prohibited', icon: 'ban', tone: 'red', desc: 'Students do the whole task without AI tools.' },
+  allowed: { label: 'AI allowed for specific roles', icon: 'compass', tone: 'blue', desc: 'Students may use AI only for the roles you pick.' },
+  required: { label: 'AI required', icon: 'bot', tone: 'yellow', desc: 'Students must use AI for the roles you pick, then show how.' }
 };
 const AI_ROLES = [
   ['brainstorm', 'Brainstorm ideas'], ['outline', 'Suggest an outline'], ['explain', 'Explain hard concepts'],

@@ -174,7 +174,7 @@ function ruleBanner(a) {
     allowed: `<b>AI allowed only to:</b> ${esc(rolesText(a.roles))}. It may never write your final answer.`,
     required: `<b>Use AI to:</b> ${esc(rolesText(a.roles))}. Then show how you used it.`
   }[a.rule] || '';
-  return `<div class="banner ${esc(a.rule)}"><span aria-hidden="true">${(RULES[a.rule] || {}).icon || ''}</span><span>${txt}`
+  return `<div class="banner ${esc(a.rule)}">${RULES[a.rule] ? ic(RULES[a.rule].icon) : ''}<span>${txt}`
     + (disc.length ? `<br><span class="tiny">You will share: ${esc(disc.join(', '))}.</span>` : '')
     + (a.thinkFirst ? '<br><span class="tiny">You will answer Think First before you write.</span>' : '')
     + (a.ucCount || (a.customQs || []).length ? `<br><span class="tiny">You will answer a short Understanding Check about your own work.</span>` : '')

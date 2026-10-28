@@ -5,7 +5,7 @@
 'use strict';
 
 const sCrumb = (...parts) => [`<a href="#/student">My work</a>`, ...parts].join(' › ');
-const sNotFound = what => `<div class="empty"><span class="big" aria-hidden="true">🔍</span><b>${esc(what)} not found on this device.</b><br><span class="small">Ask your teacher for the class file.</span><br><a class="btn sm" style="margin-top:12px" href="#/student">Back</a></div>`;
+const sNotFound = what => `<div class="empty">${badge('search', 'blue', 'big')}<b>${esc(what)} not found on this device.</b><br><span class="small">Ask your teacher for the class file.</span><br><a class="btn sm" style="margin-top:12px" href="#/student">Back</a></div>`;
 
 /* ================================================================ join / login */
 addRoute('student/login', {
@@ -51,22 +51,22 @@ addRoute('student', {
     const row = ({ a, c, sub }) => {
       const late = isPastDue(a.due) && (!sub || sub.status === 'draft');
       const flag = sub && ['followup', 'concern'].includes(sub.status) ? '<span class="chip r">Action needed</span>' : statusChip(sub);
-      return `<li><a class="item" href="#/student/work/${a.id}"><span class="num" style="background:var(--page);font-size:20px" aria-hidden="true">${RULES[a.rule].icon}</span>
+      return `<li><a class="item" href="#/student/work/${a.id}">${badge(RULES[a.rule].icon, RULES[a.rule].tone, 'num')}
         <span class="grow"><b>${esc(a.title)}</b><span class="meta">${esc(c.subject)} · Due ${esc(fmtDue(a.due))}${late ? ' · late' : ''}</span></span>${flag}<span class="go" aria-hidden="true">›</span></a></li>`;
     };
     return `
     <div class="pagehead"><div><p class="eyebrow">Student</p><h1>Hi, ${esc(me.name.split(' ')[0])}</h1></div>
-      <a class="btn coral" href="#/student/play">🔎 Join a game</a></div>
+      <a class="btn coral" href="#/student/play">${ic('gamepad-2')} Join a game</a></div>
     <div class="bigstats">
       <div class="bigstat" style="background:var(--coral);color:#fff"><b>${todo.length}</b><span>to do</span></div>
       <div class="bigstat" style="background:var(--cream)"><b>${action.length}</b><span>need reply</span></div>
       <div class="bigstat" style="background:var(--skybg)"><b>${all.filter(x => x.sub?.status === 'accepted').length}</b><span>done</span></div>
     </div>
     ${games.length ? `<a class="card navy" href="#/student/game/${games[0].id}" style="display:flex;gap:14px;align-items:center;text-decoration:none">
-      <span style="font-size:30px" aria-hidden="true">🔎</span><span class="grow"><b style="font-size:17px">Evidence Game is live</b><br><span class="muted small">${esc(scenarioById(games[0].scenarioId)?.title || '')}</span></span><span class="codechip">${esc(games[0].code)}</span></a>` : ''}
+      ${badge('gamepad-2', 'yellow', 'lg')}<span class="grow"><b style="font-size:17px">Evidence Game is live</b><br><span class="muted small">${esc(scenarioById(games[0].scenarioId)?.title || '')}</span></span><span class="codechip">${esc(games[0].code)}</span></a>` : ''}
     ${action.length ? `<h2>Needs your reply</h2><ul class="list" style="margin-bottom:24px">${action.map(row).join('')}</ul>` : ''}
     <h2>Assignments</h2>
-    ${all.length ? `<ul class="list">${all.filter(x => !action.includes(x)).map(row).join('')}</ul>` : '<div class="empty"><span class="big" aria-hidden="true">📚</span>No assignments yet.</div>'}
+    ${all.length ? `<ul class="list">${all.filter(x => !action.includes(x)).map(row).join('')}</ul>` : `<div class="empty">${badge('book-open', 'coral', 'big')}No assignments yet.</div>`}
     <details class="card flat" style="margin-top:24px"><summary>Join another class</summary>
       <form data-form="joinAnother" novalidate style="margin-top:12px"><div class="row top wrap"><label class="grow" style="min-width:160px"><span class="sr-only">Class code</span><input type="text" name="code" class="code" maxlength="9" placeholder="MUN-XXXX"></label><button class="btn" style="margin-top:6px">Join</button></div>
       <p class="err" id="anotherErr" role="alert"></p></form></details>`;
@@ -76,17 +76,22 @@ addRoute('student/play', {
   role: 'student',
   render() {
     const me = currentStudent(), games = DB.games.filter(g => g.open && me.classIds.includes(g.classId));
+    const status = g => { const pl = g.plays.find(x => x.studentId === me.id); return pl?.verdict ? 'Done' : pl?.gut ? 'Continue' : 'Start'; };
     return `
-    <div style="max-width:480px;margin:0 auto" class="center">
-      <img src="assets/muni.svg" alt="" style="width:110px">
+    <div class="lobby">
+      <img src="assets/muni.svg" alt="" class="lobby-muni">
       <h1>Evidence Game</h1>
-      <p class="muted">Enter the room code on the board.</p>
-      <form class="card" data-form="joinGame" novalidate>
-        <label class="field"><span class="sr-only">Room code</span><input type="text" name="code" class="code" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off" style="font-size:34px"></label>
+      <p class="lsn-sub">Check a claim like a detective. Enter the room code on the board.</p>
+      <form class="lobby-form" data-form="joinGame" novalidate>
+        <label class="sr-only" for="gcode">Room code</label>
+        <input id="gcode" type="text" name="code" class="code" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
         <p class="err" id="gameErr" role="alert"></p>
-        <button class="btn coral lg block">Play</button>
+        <button class="dbtn block">Play</button>
       </form>
-      ${games.length ? `<p class="small muted">Open now</p><ul class="list">${games.map(g => `<li><a class="item" href="#/student/game/${g.id}"><span class="grow" style="text-align:left"><b>${esc(scenarioById(g.scenarioId)?.title || 'Round')}</b></span><span class="codechip">${esc(g.code)}</span></a></li>`).join('')}</ul>` : ''}
+      ${games.length ? `<h2 class="lobby-h">Open now</h2><ul class="list">${games.map(g => { const sc = scenarioById(g.scenarioId); return `<li>
+        <a class="dtile lrow" href="#/student/game/${g.id}">${kindIcon(sc?.icon)}<span class="grow"><b>${esc(sc?.title || 'Round')}</b>
+          <small>${sc ? `${plural(sc.cards.length, 'evidence card')} · about ${sc.minutes} min` : ''}</small></span>
+          <span class="codechip">${esc(g.code)}</span><span class="lrow-go">${status(g)}</span></a></li>`; }).join('')}</ul>` : ''}
     </div>`;
   }
 });
@@ -151,9 +156,9 @@ function nextStepBtn(sub, a, step, label = 'Next') {
   const steps = stepsFor(a), i = steps.findIndex(([k]) => k === step), next = steps[i + 1];
   const prev = steps[i - 1];
   return `<div class="btnrow" style="margin-top:16px">
-    ${prev ? `<a class="btn ghost lg" href="#/student/work/${a.id}/${prev[0]}" style="flex:0 1 auto">← Back</a>` : ''}
-    ${next ? `<button class="btn coral lg" data-act="sbNext" data-v="${a.id}:${step}:${next[0]}" id="nextBtn" ${stepDone(sub, a, step) ? '' : 'disabled'}>${label} →</button>`
-           : `<button class="btn coral lg" data-act="sbSubmit" data-v="${a.id}" id="nextBtn" ${stepDone(sub, a, step) ? '' : 'disabled'}>Submit ✓</button>`}
+    ${prev ? `<a class="btn ghost lg" href="#/student/work/${a.id}/${prev[0]}" style="flex:0 1 auto">${ic('arrow-left')} Back</a>` : ''}
+    ${next ? `<button class="btn coral lg" data-act="sbNext" data-v="${a.id}:${step}:${next[0]}" id="nextBtn" ${stepDone(sub, a, step) ? '' : 'disabled'}>${label} ${ic('arrow-right')}</button>`
+           : `<button class="btn coral lg" data-act="sbSubmit" data-v="${a.id}" id="nextBtn" ${stepDone(sub, a, step) ? '' : 'disabled'}>Submit ${ic('check')}</button>`}
   </div>`;
 }
 function workHeader(a) {
@@ -250,7 +255,7 @@ function stepWrite(sub, a) {
       <textarea id="editor" class="editor" spellcheck="true" placeholder="Start writing…">${esc(sub.text)}</textarea></label>
     <div class="row wrap between small">
       <span class="muted"><span id="wc">${words(sub.text)}</span> words · <span id="saveState" aria-live="polite">${sub.updatedAt ? `Saved ${fmtTime(sub.updatedAt)}` : 'Not saved yet'}</span></span>
-      <button class="btn ghost sm" data-act="sbSaveDraft" data-v="${a.id}">💾 Save draft</button>
+      <button class="btn ghost sm" data-act="sbSaveDraft" data-v="${a.id}">${ic('save')} Save draft</button>
     </div>
     ${unlabeled.length > 1 ? `<p class="small" style="margin-top:8px"><b>${unlabeled.length} pastes</b> still need a label. <button class="linkbtn" data-act="sbLabelAll" data-v="${a.id}">Label them</button></p>` : ''}
     <details class="card flat" style="margin-top:14px"><summary>Your process so far</summary>
@@ -259,10 +264,10 @@ function stepWrite(sub, a) {
     ${nextStepBtn(sub, a, 'write')}`;
 }
 function pastePrompt(i, p, a) {
-  const opts = [['source', '📚 A source'], ['mine', '✍️ My own'], ['ai', '🤖 AI']];
+  const opts = [['source', 'A source', 'book-marked'], ['mine', 'My own', 'pen-line'], ['ai', 'AI', 'bot']];
   return `<div class="pastebox" role="group" aria-labelledby="pp-${i}">
     <p class="small" id="pp-${i}" style="margin-bottom:8px"><b>Pasted ${plural(p.words, 'word')}.</b> Where is it from?</p>
-    <div class="seg">${opts.map(([v, l]) => `<button type="button" data-act="sbLabel" data-v="${a.id}:${i}:${v}">${l}</button>`).join('')}</div></div>`;
+    <div class="seg">${opts.map(([v, l, icn]) => `<button type="button" data-act="sbLabel" data-v="${a.id}:${i}:${v}">${ic(icn)} ${l}</button>`).join('')}</div></div>`;
 }
 function mountWrite(sub, a) {
   const ed = $('#editor'); if (!ed) return;
@@ -428,7 +433,7 @@ function submittedView(sub, a) {
         <div class="stat"><b>${sub.pastes.filter(p => p.label).length}/${sub.pastes.length}</b><span>pastes labeled</span></div>
       </div></div>
     <details class="card flat"><summary style="cursor:pointer;font-weight:700">Read what you submitted</summary><div class="snap">${esc(sub.text)}</div></details>
-    <div class="btnrow"><a class="btn ghost" href="#/student">← My work</a><button class="btn ghost" data-act="exportMine">Export</button></div>`;
+    <div class="btnrow"><a class="btn ghost" href="#/student">${ic('arrow-left')} My work</a><button class="btn ghost" data-act="exportMine">Export</button></div>`;
 }
 FORM.answerFollowup = (fd, form) => {
   const sub = submissionById(form.dataset.sid);

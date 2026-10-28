@@ -36,9 +36,9 @@ addRoute('', {
             <h3>Clear AI rules for every task</h3>
             <p>Prohibited, allowed, or required. Students see it before they start.</p>
             <div class="art" aria-hidden="true">
-              <div class="mini"><span class="ic" style="background:var(--badbg)">⛔</span><b>AI prohibited</b></div>
-              <div class="mini sel"><span class="ic" style="background:var(--infobg)">🧭</span><b>AI allowed for specific roles</b></div>
-              <div class="mini"><span class="ic" style="background:var(--warnbg)">🤖</span><b>AI required</b></div>
+              <div class="mini"><span class="ic" style="background:var(--badbg);color:var(--bad)">${ic('ban')}</span><b>AI prohibited</b></div>
+              <div class="mini sel"><span class="ic" style="background:var(--infobg);color:var(--info)">${ic('compass')}</span><b>AI allowed for specific roles</b></div>
+              <div class="mini"><span class="ic" style="background:var(--warnbg);color:var(--warn)">${ic('bot')}</span><b>AI required</b></div>
             </div>
           </article>
           <article class="b-coral span-5">
@@ -51,14 +51,14 @@ addRoute('', {
             <h3>Understanding Check</h3>
             <p>Quick questions made from the student’s own work.</p>
             <div class="art" aria-hidden="true">
-              <div class="mini"><span class="ic" style="background:var(--okbg)">✓</span>Understands</div>
+              <div class="mini"><span class="ic" style="background:var(--okbg);color:var(--ok)">${ic('check')}</span>Understands</div>
               <div class="mini"><span class="ic" style="background:var(--warnbg)">~</span>Partly</div>
             </div>
           </article>
           <article class="b-yellow span-7">
             <h3>Evidence Game</h3>
             <p>A 10-minute class game. Inspect the cards, then decide.</p>
-            <div class="art" aria-hidden="true"><div class="verdict-row"><span>✅ Supported</span><span>❔ Unverified</span><span class="on">⚠️ Misleading</span></div></div>
+            <div class="art" aria-hidden="true"><div class="verdict-row"><span>${ic('shield-check')} Supported</span><span>${ic('circle-help')} Unverified</span><span class="on">${ic('triangle-alert')} Misleading</span></div></div>
           </article>
         </div>
       </section>
@@ -111,7 +111,7 @@ function phoneGame() {
     <div class="ph-body">
       <div class="ph-row"><div class="ph-card" style="flex:1;background:#FDE2DF"><b>FB post</b>2.4K shares</div><div class="ph-card" style="flex:1;background:var(--warnbg)"><b>Screenshot</b>Dated last year</div></div>
       <div class="ph-row"><div class="ph-card" style="flex:1;background:var(--infobg)"><b>City page</b>Classes continue</div><div class="ph-card" style="flex:1;background:var(--okbg)"><b>PAGASA</b>No signal</div></div>
-      <div class="ph-btn" style="background:#fff">✅ Supported</div><div class="ph-btn" style="background:#fff">❔ Unverified</div><div class="ph-btn" style="background:var(--navy);color:#fff">⚠️ Misleading</div>
+      <div class="ph-btn" style="background:#fff">${ic('shield-check')} Supported</div><div class="ph-btn" style="background:#fff">${ic('circle-help')} Unverified</div><div class="ph-btn" style="background:var(--navy);color:#fff">${ic('triangle-alert')} Misleading</div>
     </div></div></div>`;
 }
 
@@ -124,8 +124,8 @@ addRoute('start/:role?', {
     return `
     <div class="center" style="margin-bottom:24px"><h1>Welcome to Muna</h1><p class="muted">Who’s using Muna?</p></div>
     <div class="roles">
-      <a class="role t" href="#/start/teacher"><h2>Teacher</h2><p>${DB.teacher ? `Continue as ${esc(DB.teacher.name)}` : 'Set up your classes'}</p><span class="go">Continue →</span><img src="assets/wordmark.svg" alt="" style="width:170px;right:16px;bottom:20px"></a>
-      <a class="role s" href="#/start/student"><h2>Student</h2><p>Join with a class code</p><span class="go">Continue →</span><img src="assets/muni.svg" alt=""></a>
+      <a class="role t" href="#/start/teacher"><h2>Teacher</h2><p>${DB.teacher ? `Continue as ${esc(DB.teacher.name)}` : 'Set up your classes'}</p><span class="go">Continue ${ic('arrow-right')}</span><img src="assets/wordmark.svg" alt="" style="width:170px;right:16px;bottom:20px"></a>
+      <a class="role s" href="#/start/student"><h2>Student</h2><p>Join with a class code</p><span class="go">Continue ${ic('arrow-right')}</span><img src="assets/muni.svg" alt=""></a>
     </div>
     <p class="center small muted" style="margin-top:24px">New here? <button class="linkbtn" data-act="loadSample">Open the sample class</button></p>`;
   }

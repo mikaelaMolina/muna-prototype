@@ -43,8 +43,8 @@ function render(keep = false) {
   try { html = route.render(params); }
   catch (e) { console.error(e); html = `<div class="empty"><p><b>Something went wrong on this screen.</b></p><p class="small">${esc(e.message)}</p><a class="btn" href="#/">Go home</a></div>`; }
   if (html == null) return; // route redirected
-  main.className = route.site ? 'site' : route.wide ? 'wide' : '';
-  document.body.className = route.site ? 'site' : DB.session.role ? 'app' : '';
+  main.className = route.site ? 'site' : route.lesson ? 'lesson' : route.wide ? 'wide' : '';
+  document.body.className = route.site ? 'site' : [DB.session.role ? 'app' : '', route.lesson ? 'lesson' : ''].join(' ').trim();
   const crumbs = route.crumbs ? route.crumbs(params) : '';
   main.innerHTML = (crumbs ? `<nav class="crumbs" aria-label="Breadcrumb">${crumbs}</nav>` : '') + html;
   renderTopbar(route, params);
@@ -84,17 +84,17 @@ function renderTopbar(route) {
   let links = [];
   if (role === 'teacher' && signedIn) {
     const n = DB.submissions.filter(s => NEEDS_TEACHER.includes(s.status) && assignmentById(s.assignmentId)).length;
-    links = [['home', '#/teacher', 'Classes', '🏫'], ['review', '#/teacher/inbox', 'To review', '📝', n], ['data', '#/settings', 'Data', '💾']];
+    links = [['home', '#/teacher', 'Classes', 'school'], ['review', '#/teacher/inbox', 'To review', 'clipboard-check', n], ['data', '#/settings', 'Data', 'database']];
   } else if (role === 'student' && signedIn) {
     const n = DB.submissions.filter(s => s.studentId === stu.id && ['followup', 'concern'].includes(s.status)).length;
-    links = [['home', '#/student', 'My work', '📚', n], ['play', '#/student/play', 'Evidence Game', '🔎'], ['data', '#/settings', 'Data', '💾']];
+    links = [['home', '#/student', 'My work', 'book-open', n], ['play', '#/student/play', 'Evidence Game', 'gamepad-2'], ['data', '#/settings', 'Data', 'database']];
   }
-  const link = ([k, href, label, , n]) => `<a href="${href}" ${k === sec ? 'aria-current="page"' : ''}>${label}${n ? `<span class="count" aria-label="${n} new">${n}</span>` : ''}</a>`;
+  const link = ([k, href, label, icn, n]) => `<a href="${href}" ${k === sec ? 'aria-current="page"' : ''}>${ic(icn)}${label}${n ? `<span class="count" aria-label="${n} new">${n}</span>` : ''}</a>`;
   $('#navlinks').innerHTML = signedIn ? links.map(link).join('')
     : `<a href="#/" data-act="scrollTo" data-v="features">Features</a><a href="#/" data-act="scrollTo" data-v="how">How it works</a><a href="#/" data-act="scrollTo" data-v="tanong">T.A.N.O.N.G.</a>`;
-  $('#tabbar').innerHTML = signedIn ? links.map(([k, href, label, ic, n]) => `<a href="${href}" ${k === sec ? 'aria-current="page"' : ''}><span class="ti" aria-hidden="true">${ic}</span>${label}${n ? `<span class="count">${n}</span>` : ''}</a>`).join('') : '';
+  $('#tabbar').innerHTML = signedIn ? links.map(([k, href, label, icn, n]) => `<a href="${href}" ${k === sec ? 'aria-current="page"' : ''}><span class="ti">${ic(icn)}</span>${label}${n ? `<span class="count">${n}</span>` : ''}</a>`).join('') : '';
   const name = role === 'teacher' ? DB.teacher?.name : stu?.name;
-  $('#navright').innerHTML = `<span id="timer"></span>` + (signedIn
+  $('#navright').innerHTML = `<span id="timer"></span>${themeButton()}` + (signedIn
     ? `<button class="me" data-act="toggleMenu" aria-haspopup="true" aria-expanded="false" id="meBtn"><span class="avatar" aria-hidden="true">${esc(initials(name))}</span><span class="name">${esc(name)}</span></button>`
     : `<a class="btn ghost sm" href="#/start/student">Join a class</a><a class="btn sm" href="#/start">Sign in</a>`);
   updateTimer();
@@ -103,6 +103,36 @@ function closeMenu() { const m = $('#menu'); if (m) m.remove(); const b = $('#me
 document.addEventListener('click', e => { if ($('#menu') && !e.target.closest('#menu, #meBtn')) closeMenu(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#menu')) { closeMenu(); $('#meBtn')?.focus(); } });
 
+/* ---------------------------------------------------------------- light / dark theme
+   The choice is saved on this device. With no saved choice, Muna follows the system setting.
+   index.html sets data-theme before the page paints, so there is no flash of the wrong theme. */
+const THEME_KEY = 'muna-theme';
+const isDark = () => document.documentElement.dataset.theme === 'dark';
+function savedTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $('meta[name=theme-color]')?.setAttribute('content', t === 'dark' ? '#141833' : '#E8594F');
+}
+function themeButton() {
+  const d = isDark(), label = d ? 'Switch to light mode' : 'Switch to dark mode';
+  return `<button class="iconbtn themebtn" data-act="toggleTheme" aria-label="${label}" title="${label}">${ic(d ? 'sun' : 'moon')}</button>`;
+}
+function swapThemeButtons() {
+  const had = document.activeElement?.classList.contains('themebtn');
+  $$('.themebtn').forEach(b => { b.outerHTML = themeButton(); });
+  if (had) $$('.themebtn').find(b => b.offsetParent)?.focus();
+}
+ACT.toggleTheme = () => {
+  const t = isDark() ? 'light' : 'dark';
+  try { localStorage.setItem(THEME_KEY, t); } catch { /* private mode: still switch for this visit */ }
+  applyTheme(t); swapThemeButtons();
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  const s = savedTheme();
+  if (s !== 'light' && s !== 'dark') { applyTheme(e.matches ? 'dark' : 'light'); swapThemeButtons(); }
+});
+applyTheme(isDark() ? 'dark' : 'light');
+
 /* ---------------------------------------------------------------- live timer in the top bar
    Screens set TIMER = { label, start, stopped } to show how long a task is taking. */
 let TIMER = null;
@@ -110,7 +140,7 @@ function updateTimer() {
   const el = $('#timer');
   if (!el) return;
   if (!TIMER) { el.innerHTML = ''; return; }
-  el.innerHTML = `<span class="timer" title="${esc(TIMER.label)}"><span class="sr-only">${esc(TIMER.label)}: </span>⏱ ${fmtClock((TIMER.stopped || Date.now()) - TIMER.start)}</span>`;
+  el.innerHTML = `<span class="timer" title="${esc(TIMER.label)}"><span class="sr-only">${esc(TIMER.label)}: </span>${ic('timer')} ${fmtClock((TIMER.stopped || Date.now()) - TIMER.start)}</span>`;
 }
 setInterval(updateTimer, 1000);
 
@@ -151,9 +181,9 @@ Object.assign(ACT, {
     const role = DB.session.role, name = role === 'teacher' ? DB.teacher?.name : currentStudent()?.name;
     document.body.insertAdjacentHTML('beforeend', `<div class="menu" id="menu" role="menu">
       <div class="who">${role === 'teacher' ? 'Teacher' : 'Student'}<br><b style="color:var(--ink);font-size:14px">${esc(name)}</b></div>
-      <a href="#/settings" role="menuitem">💾 Data &amp; export</a>
-      <button role="menuitem" data-act="switchRole">🔁 Switch account</button>
-      <button role="menuitem" data-act="signOut">↩ Sign out</button></div>`);
+      <a href="#/settings" role="menuitem">${ic('database')} Data &amp; export</a>
+      <button role="menuitem" data-act="switchRole">${ic('repeat')} Switch account</button>
+      <button role="menuitem" data-act="signOut">${ic('log-out')} Sign out</button></div>`);
     btn.setAttribute('aria-expanded', 'true'); $('#menu a').focus();
   },
   print: () => window.print(),

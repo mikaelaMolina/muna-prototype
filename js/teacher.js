@@ -68,7 +68,7 @@ addRoute('teacher', {
   }
 });
 ACT.newClassDlg = () => openDialog(`
-  <button class="iconbtn x" data-act="closeDlg" aria-label="Close">✕</button>
+  <button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button>
   <h2>New class</h2>
   <form data-form="newClass" novalidate>
     <label class="field">Class name<input type="text" name="name" required maxlength="60" placeholder="Grade 9 · Sampaguita"></label>
@@ -85,7 +85,7 @@ addRoute('teacher/inbox', {
     const pending = pendingReviews();
     const waiting = DB.submissions.filter(s => ['followup', 'concern'].includes(s.status) && assignmentById(s.assignmentId));
     return `<div class="pagehead"><div><h1>To review</h1><p class="sub">${pending.length ? `${plural(pending.length, 'submission')} waiting` : 'All caught up'}</p></div></div>
-      ${pending.length ? `<ul class="list">${pending.map(reviewItem).join('')}</ul>` : '<div class="empty"><span class="big" aria-hidden="true">🎉</span>Nothing to review right now.</div>'}
+      ${pending.length ? `<ul class="list">${pending.map(reviewItem).join('')}</ul>` : `<div class="empty">${badge('party-popper', 'green', 'big')}Nothing to review right now.</div>`}
       ${waiting.length ? `<h2 style="margin-top:28px">Waiting on students</h2><ul class="list">${waiting.map(reviewItem).join('')}</ul>` : ''}`;
   }
 });
@@ -122,15 +122,15 @@ function classAssignments(c) {
   const asg = assignmentsInClass(c.id), n = studentsInClass(c.id).length;
   return asg.length ? `<ul class="list">${asg.map(a => {
       const subs = subsForAssignment(a.id), done = subs.filter(s => s.status !== 'draft').length, todo = subs.filter(s => NEEDS_TEACHER.includes(s.status)).length;
-      return `<li><a class="item" href="#/teacher/assign/${a.id}"><span class="num" style="background:var(--page);font-size:20px" aria-hidden="true">${RULES[a.rule].icon}</span>
+      return `<li><a class="item" href="#/teacher/assign/${a.id}">${badge(RULES[a.rule].icon, RULES[a.rule].tone, 'num')}
         <span class="grow"><b>${esc(a.title)}</b><span class="meta">Due ${esc(fmtDue(a.due))} · ${esc(a.points)} pts</span></span>
         ${todo ? `<span class="chip y">${todo} to review</span>` : ''}<span class="chip n">${done}/${n}</span><span class="go" aria-hidden="true">›</span></a></li>`;
     }).join('')}</ul>`
-    : `<div class="empty"><span class="big" aria-hidden="true">📄</span>No assignments yet.<br><a class="btn coral sm" style="margin-top:12px" href="#/teacher/assign/new/${c.id}">Create one</a></div>`;
+    : `<div class="empty">${badge('file-text', 'coral', 'big')}No assignments yet.<br><a class="btn coral sm" style="margin-top:12px" href="#/teacher/assign/new/${c.id}">Create one</a></div>`;
 }
 ACT.shareDlg = cid => {
   const c = classById(cid);
-  openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">✕</button><h2>Share with students</h2>
+  openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button><h2>Share with students</h2>
     <div class="center" style="margin:8px 0 18px"><span class="bigcode">${esc(c.code)}</span><p class="small muted" style="margin:8px 0 0">Class code</p></div>
     <ol class="small" style="padding-left:20px;margin:0 0 16px"><li>Send the class file to students.</li><li>They import it and join with the code.</li><li>They send their work file back.</li></ol>
     <div class="btnrow"><button class="btn coral" data-act="exportClass" data-v="${c.id}">Download class file</button><button class="btn ghost" data-act="importFile">Import work</button></div>`);
@@ -199,8 +199,8 @@ function classGrading(c) {
     <form class="card" data-form="saveGrading" data-cid="${c.id}" novalidate>
       <h2>Grading system</h2>
       <div class="field">Your grading file <span class="hint">Kept for reference. Match the components below.</span>
-        <div class="row wrap" style="margin-top:8px"><label class="btn ghost sm">📄 Upload<input type="file" id="gradeFile" class="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"></label>
-        <span class="small" id="gradeFileName">${g.fileName ? `✓ ${esc(g.fileName)}` : 'No file yet'}</span></div></div>
+        <div class="row wrap" style="margin-top:8px"><label class="btn ghost sm">${ic('upload')} Upload<input type="file" id="gradeFile" class="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"></label>
+        <span class="small" id="gradeFileName">${g.fileName ? `${ic('check')} ${esc(g.fileName)}` : 'No file yet'}</span></div></div>
       <label class="field">Preset<select id="presetPick"><option value="">Pick a preset…</option>${Object.entries(GRADING_PRESETS).map(([k, p]) => `<option value="${k}">${esc(p.label)}</option>`).join('')}</select></label>
       <fieldset><legend>Components</legend>
         <div id="compRows">${g.components.map(compRow).join('')}</div>
@@ -215,7 +215,7 @@ function classGrading(c) {
 const compRow = p => `<div class="row" data-comp="${esc(p.id)}" style="margin-bottom:8px">
   <label class="grow"><span class="sr-only">Component name</span><input type="text" name="cname" value="${esc(p.name)}" maxlength="40" required></label>
   <label style="width:96px"><span class="sr-only">Weight percent</span><input type="number" name="cweight" value="${esc(p.weight)}" min="0" max="100" inputmode="numeric"></label>
-  <span aria-hidden="true">%</span><button type="button" class="btn danger sm" data-del-comp aria-label="Remove component">✕</button></div>`;
+  <span aria-hidden="true">%</span><button type="button" class="btn danger sm" data-del-comp aria-label="Remove component">${ic('x')}</button></div>`;
 function mountGrading(cid) {
   const form = $('form[data-form=saveGrading]'); if (!form) return;
   const total = () => { const t = $$('[name=cweight]', form).reduce((s, el) => s + (Number(el.value) || 0), 0); $('#wTotal').textContent = t + '%'; $('#wTotal').style.color = t === 100 ? 'var(--ok)' : 'var(--bad)'; };
@@ -223,7 +223,7 @@ function mountGrading(cid) {
   $('#addComp').addEventListener('click', () => { $('#compRows').insertAdjacentHTML('beforeend', compRow({ id: uid('c_'), name: '', weight: 0 })); total(); $('#compRows .row:last-child input').focus(); });
   form.addEventListener('click', e => { const b = e.target.closest('[data-del-comp]'); if (b && $$('[data-comp]', form).length > 1) { b.closest('[data-comp]').remove(); total(); } });
   $('#presetPick').addEventListener('change', e => { const k = e.target.value; if (!k) return; $('#compRows').innerHTML = presetParts(k).map(compRow).join(''); form.transmute.checked = GRADING_PRESETS[k].transmute; total(); });
-  $('#gradeFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) { $('#gradeFileName').textContent = '✓ ' + f.name; form.dataset.file = f.name; } });
+  $('#gradeFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) { $('#gradeFileName').innerHTML = ic('check') + ' ' + esc(f.name); form.dataset.file = f.name; } });
 }
 FORM.saveGrading = (fd, form) => {
   const c = classById(form.dataset.cid);
@@ -271,7 +271,7 @@ function assignmentForm(c, a) {
   <form data-form="saveAssignment" data-cid="${c.id}" data-aid="${a.id || ''}" novalidate>
   <div class="cols">
     <div>
-      ${used ? '<div class="banner required" style="margin-bottom:12px"><span aria-hidden="true">⚠️</span><span>Students already submitted. Tell the class if you change the rule.</span></div>' : ''}
+      ${used ? `<div class="banner required" style="margin-bottom:12px">${ic('triangle-alert')}<span>Students already submitted. Tell the class if you change the rule.</span></div>` : ''}
       <section class="card" aria-labelledby="h-a1">
         <h2 id="h-a1">Task</h2>
         <label class="field">Title<input type="text" name="title" required maxlength="100" value="${esc(a.title)}" placeholder="How Climate Change Affects Cebu's Coasts"></label>
@@ -285,7 +285,7 @@ function assignmentForm(c, a) {
       <section class="card" aria-labelledby="h-a2">
         <h2 id="h-a2">AI rule</h2>
         <div class="optgrid" role="radiogroup" aria-labelledby="h-a2">${Object.entries(RULES).map(([k, r]) => `
-          <label class="opt"><input type="radio" name="rule" value="${k}" ${a.rule === k ? 'checked' : ''} class="sr-only"><span class="ico" aria-hidden="true" style="font-size:26px">${r.icon}</span><span><b>${r.label.replace(' for specific roles', '')}</b></span></label>`).join('')}</div>
+          <label class="opt"><input type="radio" name="rule" value="${k}" ${a.rule === k ? 'checked' : ''} class="sr-only">${badge(r.icon, r.tone, 'ico')}<span><b>${r.label.replace(' for specific roles', '')}</b></span></label>`).join('')}</div>
         <fieldset id="rolesBox" style="margin:16px 0 0"><legend id="rolesLegend">AI may help to</legend>
           <div class="pills">${AI_ROLES.map(([k, l]) => `<label><input type="checkbox" name="roles" value="${k}" ${a.roles.includes(k) ? 'checked' : ''}>${esc(l)}</label>`).join('')}</div>
           <p class="tiny muted" style="margin:8px 0 0">AI never writes the final answer.</p>
@@ -384,8 +384,8 @@ addRoute('teacher/assign/:aid', {
     return `
     <div class="pagehead"><div><p class="eyebrow">${esc(c.name)}</p><h1>${esc(a.title)}</h1></div>
       <a class="btn ghost sm" href="#/teacher/assign/${a.id}/edit">Edit</a></div>
-    <div class="chips"><span class="chip">${RULES[a.rule].icon} ${RULES[a.rule].label}</span><span class="chip y">Due ${esc(fmtDue(a.due))}</span>
-      <span class="chip s">${esc(a.points)} pts · ${esc(comp ? comp.name : '–')}</span>${a.setupMs ? `<span class="chip n">⏱ set up in ${fmtDur(a.setupMs)}</span>` : ''}</div>
+    <div class="chips"><span class="chip">${ic(RULES[a.rule].icon)} ${RULES[a.rule].label}</span><span class="chip y">Due ${esc(fmtDue(a.due))}</span>
+      <span class="chip s">${esc(a.points)} pts · ${esc(comp ? comp.name : '–')}</span>${a.setupMs ? `<span class="chip n">${ic('timer')} set up in ${fmtDur(a.setupMs)}</span>` : ''}</div>
     <div class="bigstats">
       <div class="bigstat" style="background:var(--coral);color:#fff"><b>${counts.submitted + counts.answered + counts.replied}</b><span>to review</span></div>
       <div class="bigstat" style="background:var(--okbg)"><b>${counts.accepted}</b><span>accepted</span></div>
@@ -417,29 +417,45 @@ addRoute('teacher/review/:sid', {
     const max = Math.max(1, ...comps.map(x => x.total));
     const isDraft = sub.status === 'draft';
     const asks = askAbout(sub, a), fups = suggestedFollowups(sub, a);
+    const facts = ruleFacts(sub, a), passed = facts.filter(f => f[0] === 'ok').length;
+    // Specific talking points first. Skip a general warning when a talking point already names the same paste.
+    const pasteAsk = asks.some(x => /^(paste|aipaste):/.test(x.key));
+    const looks = [...asks.map(x => ({ icon: 'circle-help', t: x.text })),
+      ...facts.filter(([k, t]) => k === 'warn' && !(pasteAsk && /past/i.test(t))).map(([, t]) => ({ icon: 'circle-alert', t }))];
+    const calm = !looks.length, aiLabel = sub.ai.none ? 'None' : sub.ai.tool ? esc(sub.ai.tool) : 'Not said';
+    const used = new Set(comps.flatMap(k => ['typed', 'mine', 'source', 'unlabeled', 'ai'].filter(t => k[t])));
+    if (pts.some(x => x.think)) used.add('mine');
+    const LEGEND = [['typed', 'Typed'], ['mine', 'Own text / Think First'], ['source', 'Cited paste'], ['unlabeled', 'Unlabeled paste'], ['ai', 'AI paste']];
     return `
     <div class="pagehead"><div class="row"><span class="avatar" style="width:52px;height:52px;font-size:18px" aria-hidden="true">${esc(initials(stu.name))}</span>
       <div><p class="eyebrow" style="margin:0">${esc(a.title)}</p><h1>${esc(stu.name)}</h1></div></div>${statusChip(sub)}</div>
     <div class="chips">${sub.submittedAt ? `<span class="chip y">Submitted ${esc(fmtWhen(sub.submittedAt))}</span>` : ''}
-      ${a.due && sub.submittedAt > new Date(a.due + 'T23:59:59').getTime() ? '<span class="chip r">Late</span>' : ''}<span class="chip">${RULES[a.rule].icon} ${RULES[a.rule].label}</span></div>
-    ${isDraft ? '<div class="banner note" style="margin-bottom:16px"><span aria-hidden="true">✏️</span><span>Still working. You can decide once they submit.</span></div>' : ''}
+      ${a.due && sub.submittedAt > new Date(a.due + 'T23:59:59').getTime() ? '<span class="chip r">Late</span>' : ''}<span class="chip">${ic(RULES[a.rule].icon)} ${RULES[a.rule].label}</span></div>
+    ${isDraft ? `<div class="banner note" style="margin-bottom:16px">${ic('pencil')}<span>Still working. You can decide once they submit.</span></div>` : ''}
+    <section class="card sumcard" aria-labelledby="h-sum">
+      <div class="sum-top">${badge(calm ? 'circle-check' : 'eye', calm ? 'green' : 'yellow', 'lg')}
+        <div><h2 id="h-sum">${calm ? 'Nothing unusual in how this was made' : `${plural(looks.length, 'thing')} worth a quick look`}</h2>
+        <p class="sum-sub">${passed} of ${facts.length} checks passed · Facts only, never a “% AI” score.</p></div></div>
+      <div class="sum-stats">
+        <div>${ic('timer')}<b>${fmtDur(activeMs(sub))}</b><span>writing time</span></div>
+        <div>${ic('file-text')}<b>${draftCount(sub)}</b><span>${draftCount(sub) === 1 ? 'draft' : 'drafts'}</span></div>
+        <div>${ic('book-marked')}<b>${sub.sources.length}</b><span>${sub.sources.length === 1 ? 'source' : 'sources'}</span></div>
+        <div>${ic('bot')}<b>${aiLabel}</b><span>AI use</span></div>
+      </div>
+      ${looks.length ? `<ul class="looks">${looks.map(l => `<li>${ic(l.icon)}<span>${esc(l.t)}</span></li>`).join('')}</ul>
+        <p class="tiny muted" style="margin:6px 0 0">Talking points, not proof.</p>` : ''}
+      <details class="more"><summary>All checks and details ${ic('chevron-down', 'chev')}</summary>
+        <div class="more-in">
+          ${facts.map(([k, t]) => `<div class="fact ${k}"><span class="dot" aria-hidden="true">${ic(k === 'ok' ? 'check' : k === 'warn' ? 'circle-alert' : 'info')}</span><span>${esc(t)}</span></div>`).join('')}
+          <p class="small muted" style="margin:10px 0">${plural((sub.sessions || []).length, 'writing session')} · ${plural(sub.pastes.length, 'paste')} (${sub.pastes.filter(x => x.label).length} labeled)</p>
+          <button class="btn ghost sm" data-act="rvDetector" data-v="${sub.id}">Compare with a detector (mock)</button>
+        </div>
+      </details>
+    </section>
     <div class="cols">
     <div>
-      <section class="receipt" aria-labelledby="h-rc">
-        <p class="eyebrow" id="h-rc">Muna Receipt</p>
-        <div class="stats">
-          <div class="stat"><b>${(sub.sessions || []).length}</b><span>sessions</span></div>
-          <div class="stat"><b>${fmtDur(activeMs(sub))}</b><span>active writing</span></div>
-          <div class="stat"><b>${draftCount(sub)}</b><span>drafts saved</span></div>
-          <div class="stat"><b>${sub.sources.length}</b><span>sources</span></div>
-          <div class="stat"><b>${sub.pastes.length}</b><span>pastes (${sub.pastes.filter(x => x.label).length} labeled)</span></div>
-          <div class="stat"><b>${sub.ai.none ? 'None' : sub.ai.tool ? esc(sub.ai.tool) : '–'}</b><span>AI disclosed</span></div>
-        </div>
-        <p class="tiny muted" style="margin:10px 0 0">Facts only. Never a “% AI” score.</p>
-      </section>
-
       <section class="card" aria-labelledby="h-gr">
-        <div class="row between"><h2 id="h-gr">How the work grew</h2>${pts.length ? '<span class="tiny muted">Tap a bar</span>' : ''}</div>
+        <div class="row between"><h2 id="h-gr" class="stephead"><span class="stepn">1</span>See how it was made</h2>${pts.length ? '<span class="tiny muted">Tap a bar to read that version</span>' : ''}</div>
         ${pts.length ? `
         <div class="bars" role="group" aria-label="Words at each saved version">${pts.map((x, i) => {
           const k = comps[i];
@@ -447,33 +463,23 @@ addRoute('teacher/review/:sid', {
             <span class="n">${k.total}</span><span class="stk" style="height:${Math.max(4, k.total / max * 100)}%">${['typed', 'mine', 'source', 'unlabeled', 'ai'].filter(t => k[t]).map(t => `<span class="k-${x.think && t === 'typed' ? 'mine' : t}" style="flex:${k[t]};min-height:3px"></span>`).join('')}</span></button>`;
         }).join('')}</div>
         <div class="barlabels" aria-hidden="true">${pts.map(x => `<span>${esc(x.label)}</span>`).join('')}</div>
-        <div class="legend"><span><i class="k-typed"></i>Typed</span><span><i class="k-mine"></i>Own text / Think First</span><span><i class="k-source"></i>Cited paste</span><span><i class="k-unlabeled"></i>Unlabeled paste</span><span><i class="k-ai"></i>AI paste</span></div>
+        <div class="legend">${LEGEND.filter(([k]) => used.has(k)).map(([k, l]) => `<span><i class="k-${k}"></i>${l}</span>`).join('')}</div>
         <div class="snap" tabindex="0" aria-label="${esc(snap.label)} text"><p class="tiny muted" style="margin:0 0 6px;white-space:normal"><b>${esc(snap.label)}</b> · ${esc(fmtWhen(snap.at))} · ${words(snap.text)} words</p>${snap.think ? esc(snap.text) : highlightHTML(snap.text, sub.pastes)}</div>`
         : '<div class="empty small">Nothing written yet.</div>'}
-        ${timelineItems(sub).length ? `<details style="margin-top:16px"><summary>Timeline (${timelineItems(sub).length})</summary><ul class="tl" style="margin-top:12px">${timelineItems(sub).map(t => `<li class="${t.cls}"><time>${esc(fmtWhen(t.at))}</time>${t.html}</li>`).join('')}</ul></details>` : ''}
-      </section>
-
-      <section class="card" aria-labelledby="h-src">
-        <h2 id="h-src">Sources &amp; AI note</h2>
+        ${timelineItems(sub).length ? `<details class="more"><summary>Timeline (${timelineItems(sub).length}) ${ic('chevron-down', 'chev')}</summary><ul class="tl" style="margin-top:12px">${timelineItems(sub).map(t => `<li class="${t.cls}"><time>${esc(fmtWhen(t.at))}</time>${t.html}</li>`).join('')}</ul></details>` : ''}
+        <details class="more"><summary>Sources and AI note ${ic('chevron-down', 'chev')}</summary><div class="more-in">
         ${sub.sources.length ? sub.sources.map((s, i) => `<div class="fact info"><span class="dot" aria-hidden="true">${i + 1}</span><span>${esc(s.title)}${s.link ? `<br><a class="tiny" href="${esc(s.link)}" target="_blank" rel="noopener noreferrer">${esc(s.link)}</a>` : ''}</span></div>`).join('') : '<p class="small muted">No sources listed.</p>'}
         <hr class="divider">
         ${sub.ai.none ? '<p class="small"><b>No AI used</b> (student says)</p>' : (sub.ai.tool || sub.ai.purpose) ? `
           <dl class="small" style="margin:0">${[['Tool', sub.ai.tool], ['Used it for', sub.ai.purpose], ['Prompts', sub.ai.prompts], ['Kept or changed', sub.ai.changes]].filter(([, v]) => v).map(([k, v]) => `<dt><b>${k}</b></dt><dd style="margin:0 0 8px;white-space:pre-wrap">${esc(v)}</dd>`).join('')}</dl>` : '<p class="small muted">AI note not filled in yet.</p>'}
+        </div></details>
       </section>
     </div>
 
     <div class="sticky">
-      <section class="card" aria-labelledby="h-rl">
-        <h2 id="h-rl">Rule check</h2>
-        ${ruleFacts(sub, a).map(([k, t]) => `<div class="fact ${k}"><span class="dot" aria-hidden="true">${k === 'ok' ? '✓' : k === 'warn' ? '!' : 'i'}</span><span>${esc(t)}</span></div>`).join('')}
-        ${asks.length ? `<div class="card cream flat" style="margin:14px 0 0;padding:12px 14px"><h3>Worth asking about</h3><p class="tiny muted" style="margin-bottom:4px">Talking points, not proof.</p>
-          ${asks.map(x => `<div class="fact info"><span class="dot" aria-hidden="true">?</span><span>${esc(x.text)}</span></div>`).join('')}</div>` : ''}
-        <button class="btn ghost sm block" style="margin-top:12px" data-act="rvDetector" data-v="${sub.id}">Compare with a detector (mock)</button>
-      </section>
-
       <section class="card" aria-labelledby="h-uc">
-        <h2 id="h-uc">Understanding Check</h2>
-        ${sub.uc.questions.length ? `<p class="tiny muted">From ${esc(stu.name.split(' ')[0])}’s own work. Rate each.</p>
+        <h2 id="h-uc" class="stephead"><span class="stepn">2</span>Check understanding</h2>
+        ${sub.uc.questions.length ? `<p class="small muted">Questions made from ${esc(stu.name.split(' ')[0])}’s own work. Rate each answer.</p>
           ${sub.uc.questions.map((q, i) => `<div class="qa"><p class="q">${i + 1}. ${esc(q)}</p><p class="a">${esc(sub.uc.answers[i] || '(no answer yet)')}</p>
             <div class="seg" role="group" aria-label="Rate answer ${i + 1}">${[['clear', 'Understands'], ['partly', 'Partly'], ['no', 'Not yet']].map(([v, l]) => `<button data-act="rvRate" data-v="${sub.id}:${i}:${v}" aria-pressed="${sub.review.ratings[i] === v}">${l}</button>`).join('')}</div></div>`).join('')}`
           : '<p class="small muted">Not used on this task.</p>'}
@@ -515,9 +521,9 @@ function decisionCard(sub, a, rv, asks, fups) {
   const d = rv.decision;
   return `
   <form class="card" data-form="decide" data-sid="${sub.id}" aria-labelledby="h-dc" novalidate>
-    <h2 id="h-dc">Your decision</h2>
-    <div class="optgrid" role="radiogroup" aria-labelledby="h-dc">${[['accept', '✅', 'Accept'], ['followup', '💬', 'Follow up'], ['concern', '🚩', 'Concern']]
-      .map(([v, ic, l]) => `<button type="button" class="opt" role="radio" aria-checked="${d === v}" data-act="rvDecision" data-v="${sub.id}:${v}" style="align-items:center"><span class="ico" aria-hidden="true" style="font-size:24px">${ic}</span><b>${l}</b></button>`).join('')}</div>
+    <h2 id="h-dc" class="stephead"><span class="stepn">3</span>Decide</h2>
+    <div class="optgrid" role="radiogroup" aria-labelledby="h-dc">${[['accept', 'circle-check', 'Accept', 'green'], ['followup', 'message-circle', 'Follow up', 'blue'], ['concern', 'flag', 'Concern', 'red']]
+      .map(([v, icn, l, tone]) => `<button type="button" class="opt" role="radio" aria-checked="${d === v}" data-act="rvDecision" data-v="${sub.id}:${v}" style="align-items:center">${badge(icn, tone, 'ico')}<b>${l}</b></button>`).join('')}</div>
     ${d === 'followup' ? '<p class="tiny muted" style="margin:8px 0 0">Grade waits for their answer.</p>' : d === 'concern' ? '<p class="tiny muted" style="margin:8px 0 0">They can reply or appeal.</p>' : ''}
     ${d === 'accept' ? `<div style="margin-top:12px">
       <label class="field">Score / ${esc(a.points)}<input type="number" name="score" min="0" max="${esc(a.points)}" step="0.5" inputmode="decimal" value="${esc(rv.score)}"></label>
@@ -561,10 +567,10 @@ FORM.decide = (fd, form) => {
   if (!sub.review.firstDecisionMs) sub.review.firstDecisionMs = elapsed;
   sub.review.reviewMs = elapsed; REVIEW_START = now;
   touch(sub); saveDB(); delete RV[sub.id];
-  openDialog(`<div class="center"><span style="font-size:44px" aria-hidden="true">${{ accept: '✅', followup: '💬', concern: '🚩' }[sub.review.decision]}</span>
+  openDialog(`<div class="center">${badge({ accept: 'circle-check', followup: 'message-circle', concern: 'flag' }[sub.review.decision], { accept: 'green', followup: 'blue', concern: 'red' }[sub.review.decision], 'big')}
     <h2>${esc({ accept: 'Accepted', followup: 'Follow-up sent', concern: 'Concern raised' }[sub.review.decision])}</h2>
     <p class="small muted">${esc(note)} · reviewed in <b>${fmtDur(elapsed)}</b></p></div>
-    <div class="btnrow"><button class="btn ghost" data-act="closeDlg">Stay</button><button class="btn coral" data-act="nextReview" data-v="${a.id}">Next →</button></div>`);
+    <div class="btnrow"><button class="btn ghost" data-act="closeDlg">Stay</button><button class="btn coral" data-act="nextReview" data-v="${a.id}">Next ${ic('arrow-right')}</button></div>`);
   refresh();
 };
 ACT.nextReview = aid => {
@@ -608,18 +614,18 @@ addRoute('teacher/game/:gid', {
       <div>
         <section class="card" aria-labelledby="h-res"><div class="row between"><h2 id="h-res">Class results</h2><button class="btn ghost sm" data-act="refreshGame">Refresh</button></div>
           <p class="small muted">${plural(done.length, 'student')} answered${g.plays.length > done.length ? ` · ${g.plays.length - done.length} playing` : ''}${done.length ? ` · avg ${avg}/100` : ''}</p>
-          ${Object.entries(VERDICTS).map(([k, v]) => `<div class="vbar"><span class="lbl">${v.icon} ${v.label}</span><span class="track"><span class="fill" style="width:${done.length ? dist[k] / done.length * 100 : 0}%"></span></span><b>${dist[k]}</b></div>`).join('')}
+          ${Object.entries(VERDICTS).map(([k, v]) => `<div class="vbar"><span class="lbl">${vIcon(k, 'sm')} ${v.label}</span><span class="track"><span class="fill" style="width:${done.length ? dist[k] / done.length * 100 : 0}%"></span></span><b>${dist[k]}</b></div>`).join('')}
           <h3 style="margin-top:16px">T.A.N.O.N.G. steps used</h3>
           ${STEP_KEYS.map((st, i) => `<div class="vbar"><span class="lbl">${TANONG[i][0]} · ${st}</span><span class="track"><span class="fill" style="background:var(--yellow);width:${done.length ? stepUse[i] / done.length * 100 : 0}%"></span></span><b>${stepUse[i]}</b></div>`).join('')}
         </section>
         <section class="card" aria-labelledby="h-pl"><h2 id="h-pl">Answers</h2>
           ${done.length ? `<div class="tablewrap"><table><thead><tr><th scope="col">Student</th><th scope="col">Verdict</th><th scope="col">Best evidence</th><th scope="col" class="num">Points</th></tr></thead><tbody>
-            ${done.map(pl => { const st = studentById(pl.studentId); const best = sc.cards.find(x => x.id === pl.best); return `<tr><th scope="row">${esc(st ? st.name : 'Student')}</th><td>${VERDICTS[pl.verdict].icon} ${VERDICTS[pl.verdict].label}</td><td>${esc(best ? best.title : '–')}</td><td class="num">${scoreGamePlay(sc, pl).total}</td></tr>${pl.why ? `<tr><td colspan="4" class="tiny muted" style="white-space:normal">“${esc(pl.why)}”</td></tr>` : ''}`; }).join('')}
+            ${done.map(pl => { const st = studentById(pl.studentId); const best = sc.cards.find(x => x.id === pl.best); return `<tr><th scope="row">${esc(st ? st.name : 'Student')}</th><td>${vIcon(pl.verdict, 'sm')} ${VERDICTS[pl.verdict].label}</td><td>${esc(best ? best.title : '–')}</td><td class="num">${scoreGamePlay(sc, pl).total}</td></tr>${pl.why ? `<tr><td colspan="4" class="tiny muted" style="white-space:normal">“${esc(pl.why)}”</td></tr>` : ''}`; }).join('')}
           </tbody></table></div>` : `<div class="empty small">Waiting for answers. Room code <b>${esc(g.code)}</b></div>`}
         </section>
       </div>
       <div class="sticky">
-        <section class="card cream"><details><summary><b>Answer key</b> <span class="tiny muted">(tap to show)</span></summary><div style="margin-top:10px"><p class="small"><b>${VERDICTS[sc.answer].icon} ${VERDICTS[sc.answer].label}.</b> ${esc(sc.explain)}</p>
+        <section class="card cream"><details><summary><b>Answer key</b> <span class="tiny muted">(tap to show)</span></summary><div style="margin-top:10px"><p class="small"><b>${vIcon(sc.answer, 'sm')} ${VERDICTS[sc.answer].label}.</b> ${esc(sc.explain)}</p>
           <p class="small"><b>Strongest cards:</b> ${sc.best.map(id => esc(sc.cards.find(x => x.id === id).title)).join(', ')}</p></div></details></section>
         <section class="card"><h2>Discuss</h2><p class="small">${esc(sc.discuss)}</p></section>
         ${g.open ? `<button class="btn danger block" data-act="closeGame" data-v="${g.id}">Close round</button>` : `<button class="btn ghost block" data-act="reopenGame" data-v="${g.id}">Reopen round</button>`}
