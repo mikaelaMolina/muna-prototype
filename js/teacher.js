@@ -619,7 +619,7 @@ addRoute('teacher/game/:gid', {
           ${STEP_KEYS.map((st, i) => `<div class="vbar"><span class="lbl">${TANONG[i][0]} · ${st}</span><span class="track"><span class="fill" style="background:var(--yellow);width:${done.length ? stepUse[i] / done.length * 100 : 0}%"></span></span><b>${stepUse[i]}</b></div>`).join('')}
         </section>
         <section class="card" aria-labelledby="h-pl"><h2 id="h-pl">Answers</h2>
-          ${done.length ? `<div class="tablewrap"><table><thead><tr><th scope="col">Student</th><th scope="col">Verdict</th><th scope="col">Best evidence</th><th scope="col" class="num">Points</th></tr></thead><tbody>
+          ${done.length ? `<div class="tablewrap"><table class="wrapcells"><thead><tr><th scope="col">Student</th><th scope="col">Verdict</th><th scope="col">Best evidence</th><th scope="col" class="num">Points</th></tr></thead><tbody>
             ${done.map(pl => { const st = studentById(pl.studentId); const best = sc.cards.find(x => x.id === pl.best); return `<tr><th scope="row">${esc(st ? st.name : 'Student')}</th><td>${vIcon(pl.verdict, 'sm')} ${VERDICTS[pl.verdict].label}</td><td>${esc(best ? best.title : '–')}</td><td class="num">${scoreGamePlay(sc, pl).total}</td></tr>${pl.why ? `<tr><td colspan="4" class="tiny muted" style="white-space:normal">“${esc(pl.why)}”</td></tr>` : ''}`; }).join('')}
           </tbody></table></div>` : `<div class="empty small">Waiting for answers. Room code <b>${esc(g.code)}</b></div>`}
         </section>
