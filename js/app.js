@@ -192,6 +192,11 @@ Object.assign(ACT, {
     else { loadSampleData(); toast('Sample class loaded.'); }
     DB.session = { role: 'teacher', studentId: null }; saveDB(); go('teacher');
   },
+  loadSampleStudent: () => {
+    if (!DB.classes.some(c => c.sample)) { loadSampleData(); saveDB(); }
+    toast('Sample class loaded. Pick a student to continue.');
+    refresh();
+  },
   importFile: (v, el) => {
     const input = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json' });
     input.addEventListener('change', async () => {

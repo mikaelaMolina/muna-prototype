@@ -23,7 +23,12 @@ addRoute('student/login', {
       <button class="btn coral lg block">Join</button>
     </form>
     ${here.length ? `<h2 style="margin-top:24px">Continue as</h2>
-      <ul class="list">${here.map(s => `<li><button class="item" data-act="continueStudent" data-v="${s.id}"><span class="avatar" aria-hidden="true">${esc(initials(s.name))}</span><span class="grow"><b>${esc(s.name)}</b></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ul>` : ''}
+      <ul class="list">${here.map(s => `<li><button class="item" data-act="continueStudent" data-v="${s.id}"><span class="avatar" aria-hidden="true">${esc(initials(s.name))}</span><span class="grow"><b>${esc(s.name)}</b></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ul>` : `
+      <section class="card flat" style="margin-top:24px;text-align:center">
+        <b>No classes on this device yet</b>
+        <p class="small muted">Classes are saved in each browser. Try Muna with the sample class and its students.</p>
+        <button class="btn ghost block" data-act="loadSampleStudent">Try the sample class</button>
+      </section>`}
     <p class="small muted center" style="margin-top:16px">On your own phone? <button class="linkbtn" data-act="importFile">Import class file</button></p>
     </div>`;
   }
