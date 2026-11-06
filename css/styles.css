@@ -234,7 +234,7 @@ button.item { width: 100%; text-align: left; cursor: pointer; }
   .item .go { display: none; } /* whole card is the tap target; the arrow would wrap onto its own line */
 }
 .avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px; background: var(--blush); color: var(--deep); }
-.num { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 15px; }
+.num:not(td):not(th) { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 15px; }
 
 /* class tiles */
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
@@ -327,6 +327,8 @@ table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
 th { background: var(--page); font-size: 13px; position: sticky; top: 0; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+/* keep the student name column visible while a wide table scrolls sideways */
+.tablewrap tr > th:first-child { position: sticky; left: 0; z-index: 1; }
 tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
 
 /* ================================================================ evidence game */
@@ -373,6 +375,10 @@ body.site .footer { display: none; }
 .hero .lede { font-size: clamp(16px, 1.6vw, 19px); color: var(--gray); max-width: 520px; margin: 0 auto 28px; }
 .hero .ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .hero .shape { position: absolute; pointer-events: none; }
+/* .hero is also a .wrap; restore its vertical padding, which .wrap:not(.row) would zero out */
+.hero.wrap:not(.row) { padding-top: clamp(40px, 7vw, 80px); padding-bottom: clamp(36px, 5vw, 56px); }
+/* keep the hero copy above the decorative shapes */
+.hero > :not(.shape):not(.bubble-img) { position: relative; z-index: 1; }
 .shape.sun { width: 130px; height: 130px; right: 8%; top: 40px; border-radius: 50%; background: var(--yellow); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 50%, 0 100%); transform: rotate(20deg); }
 .shape.arc { width: 140px; height: 140px; left: 6%; bottom: 10px; border-radius: 50%; border: 30px solid var(--coral); border-right-color: transparent; border-top-color: transparent; transform: rotate(-20deg); }
 .shape.dot { width: 18px; height: 18px; border-radius: 50%; background: var(--sky); left: 18%; top: 70px; }
@@ -380,7 +386,7 @@ body.site .footer { display: none; }
 .hero .bubble-img img { width: 70%; }
 .hero .bubble-img.l { left: 6%; top: 110px; }
 .hero .bubble-img.r { right: 7%; bottom: 20px; border-radius: 50% 50% 50% 12%; background: var(--sky); }
-@media (max-width: 900px) { .hero .bubble-img, .shape.sun, .shape.arc { display: none; } }
+@media (max-width: 900px) { .hero .bubble-img, .shape.sun, .shape.arc, .shape.dot { display: none; } }
 
 .showcase { background: var(--navy); border-radius: var(--r-lg); padding: clamp(28px, 5vw, 56px) 20px; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 24px; min-height: 520px; }
 .showcase::before { content: ""; position: absolute; right: -80px; bottom: -80px; width: 280px; height: 280px; border-radius: 50%; border: 50px solid var(--navy2); }
@@ -394,7 +400,10 @@ body.site .footer { display: none; }
 .float.f4 { right: 8%; bottom: 18%; display: flex; flex-direction: column; gap: 6px; background: none; box-shadow: none; padding: 0; }
 .float.f4 span { background: var(--surface); border-radius: 12px; padding: 7px 12px; font-weight: 700; display: flex; gap: 8px; align-items: center; }
 .float.f4 i { width: 20px; height: 20px; border-radius: 6px; display: inline-block; }
-@media (max-width: 900px) { .float { display: none; } .showcase { min-height: 0; } }
+@media (max-width: 900px) { .float, .float.f4 { display: none; } .showcase { min-height: 0; } }
+/* phones: shrink the two mockups so they fit side by side inside the showcase */
+@media (max-width: 600px) { .showcase { gap: 14px; padding-inline: 12px; } .showcase .phone { zoom: .74; } }
+@media (max-width: 440px) { .showcase { gap: 10px; } .showcase .phone { zoom: .6; } }
 
 /* CSS phone mockups */
 .phone { position: relative; z-index: 1; width: 230px; height: 460px; border-radius: 38px; background: #0E1130; padding: 9px; box-shadow: 0 30px 60px rgba(0,0,0,.45); flex: none; }
