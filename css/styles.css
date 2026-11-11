@@ -972,6 +972,56 @@ mark.hlt { background: linear-gradient(transparent 50%, #FFE27A 50%); color: #3A
 .banner > .i { width: 20px; height: 20px; margin-top: 1px; }
 .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .empty { line-height: 1.6; }
+
+/* ================================================================ teacher walkthrough */
+.walkthrough { min-height: 100vh; background: var(--page); }
+body.walkthrough-page { padding-bottom: 0; }
+.walk-top { height: var(--nav-h); display: flex; align-items: center; gap: 24px; padding: 0 clamp(16px, 4vw, 40px); background: var(--surface); border-bottom: 1px solid var(--line); }
+.walk-top .brand img { height: 30px; }
+.walk-progress { flex: 1; max-width: 360px; margin: 0 auto; text-align: center; color: var(--gray); font-size: 13px; font-weight: 700; }
+.walk-dots { display: flex; gap: 6px; margin-top: 6px; }
+.walk-dots i { flex: 1; height: 5px; border-radius: 99px; background: var(--line); }
+.walk-dots i.on { background: var(--coral); }
+.walk-main { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: clamp(28px, 6vw, 64px) 0 48px; }
+.walk-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: clamp(24px, 5vw, 48px); box-shadow: var(--shadow); }
+.walk-card h1 { max-width: 640px; }
+.walk-icon { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 18px; border-radius: 18px; background: var(--blush); color: var(--deep); }
+.walk-icon svg { width: 30px; height: 30px; }
+.walk-lede { max-width: 650px; font-size: 19px; line-height: 1.55; }
+.walk-note { margin-top: 24px; padding: 16px 18px; border-radius: 12px; background: var(--cream); }
+.walk-note p { margin: 4px 0 0; }
+.walk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 26px; }
+.walk-feature { display: flex; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.walk-feature > span { flex: none; color: var(--deep); }
+.walk-feature p, .walk-review p { margin: 4px 0 0; color: var(--gray); font-size: 14px; }
+.walk-flow { list-style: none; padding: 0; margin: 28px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; counter-reset: walk-flow; }
+.walk-flow li { counter-increment: walk-flow; min-height: 132px; padding: 16px; border-radius: 12px; background: var(--skybg); }
+.walk-flow li::before { content: counter(walk-flow); display: grid; place-items: center; width: 28px; height: 28px; margin-bottom: 12px; border-radius: 50%; background: var(--skydeep); color: #fff; font-weight: 800; }
+.walk-flow span { display: block; margin-top: 5px; color: var(--gray); font-size: 13px; line-height: 1.4; }
+.walk-review { display: grid; gap: 12px; margin-top: 26px; }
+.walk-review > div { display: grid; grid-template-columns: 32px 1fr; column-gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
+.walk-review > div .stepn { grid-row: span 2; }
+.walk-sample { margin-top: 18px; }
+.walk-sample-list { display: grid; gap: 10px; margin: 18px 0; }
+.walk-sample-list div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 14px; border-radius: 10px; background: var(--skybg); }
+.walk-sample-list span { color: var(--gray); font-size: 14px; text-align: right; }
+.walk-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.walk-start { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 24px; background: var(--blush2); border-color: transparent; box-shadow: none; }
+.walk-start p { margin-bottom: 0; }
+@media (max-width: 640px) {
+  .walk-top { gap: 12px; }
+  .walk-top .brand img { height: 24px; }
+  .walk-progress { font-size: 12px; }
+  .walk-main { width: min(100% - 24px, 760px); padding-top: 24px; }
+  .walk-card { padding: 24px 18px; }
+  .walk-lede { font-size: 17px; }
+  .walk-grid, .walk-flow { grid-template-columns: 1fr; }
+  .walk-flow li { min-height: 0; }
+  .walk-start { display: block; }
+  .walk-start .btnrow { margin-top: 14px; }
+  .walk-sample-list div { display: block; }
+  .walk-sample-list span { display: block; margin-top: 4px; text-align: left; }
+}
 .themebtn { flex: none; }
 
 /* ================================================================ friendlier game pieces */

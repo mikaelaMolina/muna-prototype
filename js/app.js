@@ -36,6 +36,13 @@ function render(keep = false) {
     ACTIVE = null;
     return go(DB.teacher ? 'start' : 'teacher/setup');
   }
+  // New teachers see the short introduction before the empty dashboard. A teacher
+  // can exit it and resume from the dashboard, so this only redirects untouched
+  // first-run accounts with no classes yet.
+  if (route.role === 'teacher' && route.path === 'teacher' && DB.teacher && !DB.teacher.onboardingCompleted && !DB.teacher.onboardingDismissed && !DB.classes.length) {
+    ACTIVE = null;
+    return go('teacher/onboarding');
+  }
   if (route.role === 'student' && (DB.session.role !== 'student' || !currentStudent())) { ACTIVE = null; return go('student/login'); }
   ACTIVE = { route, params, path };
   const main = $('#main');
@@ -44,10 +51,13 @@ function render(keep = false) {
   catch (e) { console.error(e); html = `<div class="empty"><p><b>Something went wrong on this screen.</b></p><p class="small">${esc(e.message)}</p><a class="btn" href="#/">Go home</a></div>`; }
   if (html == null) return; // route redirected
   main.className = route.site ? 'site' : route.lesson ? 'lesson' : route.wide ? 'wide' : '';
-  document.body.className = route.site ? 'site' : [DB.session.role ? 'app' : '', route.lesson ? 'lesson' : ''].join(' ').trim();
+  document.body.className = route.site ? 'site' : [DB.session.role ? 'app' : '', route.lesson ? 'lesson' : '', route.walkthrough ? 'walkthrough-page' : ''].join(' ').trim();
   const crumbs = route.crumbs ? route.crumbs(params) : '';
   main.innerHTML = (crumbs ? `<nav class="crumbs" aria-label="Breadcrumb">${crumbs}</nav>` : '') + html;
   renderTopbar(route, params);
+  $('.topbar').hidden = !!route.walkthrough;
+  $('#tabbar').hidden = !!route.walkthrough;
+  $('.footer').hidden = !!route.walkthrough;
   if (route.mount) route.mount(params);
   updateTimer();
   if (!keep) {
@@ -177,6 +187,7 @@ Object.assign(ACT, {
     const role = DB.session.role, name = role === 'teacher' ? DB.teacher?.name : currentStudent()?.name;
     document.body.insertAdjacentHTML('beforeend', `<div class="menu" id="menu" role="menu">
       <div class="who">${role === 'teacher' ? 'Teacher' : 'Student'}<br><b style="color:var(--ink);font-size:14px">${esc(name)}</b></div>
+      <button role="menuitem" data-act="openOnboarding">${ic('circle-help')} How Muna works</button>
       <a href="#/settings" role="menuitem">${ic('database')} Data &amp; export</a>
       <button role="menuitem" data-act="switchRole">${ic('repeat')} Switch account</button>
       <button role="menuitem" data-act="signOut">${ic('log-out')} Sign out</button></div>`);
@@ -213,6 +224,10 @@ Object.assign(ACT, {
     localStorage.removeItem(STORE_KEY); DB = emptyDB(); saveDB(); TIMER = null; toast('All data erased.'); go('');
   },
   continueTeacher: () => { DB.session = { role: 'teacher', studentId: null }; saveDB(); go('teacher'); },
+  openOnboarding: () => {
+    if (DB.teacher) { DB.teacher.onboardingDismissed = false; saveDB(); }
+    closeMenu(); go('teacher/onboarding');
+  },
   continueStudent: id => { DB.session = { role: 'student', studentId: id }; saveDB(); go('student'); }
 });
 
