@@ -79,6 +79,12 @@ ACT.onboardingSample = () => openDialog(`<button class="iconbtn x" data-act="clo
 
 /* ================================================================ dashboard */
 const pendingReviews = () => DB.submissions.filter(s => NEEDS_TEACHER.includes(s.status) && assignmentById(s.assignmentId)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
+const actualTeacherClasses = () => DB.classes.filter(c => !c.sample);
+const actualTeacherAssignments = () => DB.assignments.filter(a => { const c = classById(a.classId); return c && !c.sample && !a.sample; });
+const actualTeacherReviewed = () => DB.submissions.some(s => {
+  const a = assignmentById(s.assignmentId), c = a && classById(a.classId);
+  return a && c && !a.sample && !c.sample && (s.review?.history?.length || s.review?.firstDecisionMs);
+});
 const reviewItem = s => {
   const a = assignmentById(s.assignmentId), st = studentById(s.studentId);
   return `<li><a class="item" href="#/teacher/review/${s.id}"><span class="avatar" aria-hidden="true">${esc(initials(st?.name))}</span>
@@ -88,14 +94,18 @@ addRoute('teacher', {
   role: 'teacher', wide: true,
   render() {
     const pending = pendingReviews();
-    const reviewed = DB.submissions.filter(s => s.review.firstDecisionMs);
-    const avg = reviewed.length ? reviewed.reduce((t, s) => t + s.review.firstDecisionMs, 0) / reviewed.length : 0;
+    const reviewedSubmissions = DB.submissions.filter(s => s.review.firstDecisionMs);
+    const avg = reviewedSubmissions.length ? reviewedSubmissions.reduce((t, s) => t + s.review.firstDecisionMs, 0) / reviewedSubmissions.length : 0;
     const students = new Set(DB.classes.flatMap(c => studentsInClass(c.id).map(s => s.id))).size;
-    const gettingStarted = !DB.teacher.onboardingCompleted ? `<section class="card walk-start" aria-labelledby="h-start"><div><p class="eyebrow">Getting started</p><h2 id="h-start">Take a quick tour of Muna</h2><p class="small muted">Learn how classes, assignments, file sharing, and review fit together.</p></div><div class="btnrow"><button class="btn coral sm" data-act="resumeOnboarding">Resume walkthrough · Step ${onboardingStep()} of ${ONBOARDING_STEPS}</button><button class="btn ghost sm" data-act="onboardingSample">Explore sample</button></div></section>` : '';
+    const actualClasses = actualTeacherClasses(), actualAssignments = actualTeacherAssignments(), reviewed = actualTeacherReviewed();
+    const gettingStarted = gettingStartedCard(actualClasses, actualAssignments, reviewed);
+    const emptyHint = actualClasses.length && !actualAssignments.length ? `<section class="card dashboard-hint"><h2>Your class is ready for its first assignment</h2><p class="small muted">Assignments are activities students complete and return to you in Muna.</p><button class="btn coral sm" data-act="gettingStartedAssignment">Create your first assignment</button></section>`
+      : actualAssignments.length && !DB.submissions.some(s => { const a = assignmentById(s.assignmentId); const c = a && classById(a.classId); return a && c && !a.sample && !c.sample; }) ? `<section class="card dashboard-hint"><h2>Student work will appear here</h2><p class="small muted">When students return their work files, import them from your class's Share menu to start reviewing.</p><button class="btn ghost sm" data-act="gettingStartedShare">Learn how to share</button></section>` : '';
     return `
     <div class="pagehead"><div><p class="eyebrow">${esc(DB.teacher.school || 'Teacher')}</p><h1>Magandang araw, ${esc(DB.teacher.name)}</h1></div>
       <button class="btn coral" data-act="newClassDlg">+ New class</button></div>
     ${gettingStarted}
+    ${emptyHint}
     <div class="bigstats">
       <a class="bigstat" href="#/teacher/inbox" style="background:var(--coral);color:#fff;text-decoration:none"><b>${pending.length}</b><span>to review</span></a>
       <div class="bigstat" style="background:var(--skybg)"><b>${students}</b><span>students</span></div>
@@ -114,10 +124,34 @@ addRoute('teacher', {
         }).join('')}
         <button class="tile add" data-act="newClassDlg"><span class="plus" aria-hidden="true">+</span>New class</button>
       </div>
-      ${DB.classes.length ? '' : '<p class="center small muted" style="margin-top:16px">Or <button class="linkbtn" data-act="loadSample">open the sample class</button></p>'}
+      ${DB.classes.length ? '' : '<div class="empty dashboard-empty"><p><b>Your classes are where assignments and student work are organized.</b></p><p class="small">Create your first class to get started.</p><button class="btn coral sm" data-act="newClassDlg">Create your first class</button></div>'}
     </section>`;
   }
 });
+
+function gettingStartedCard(classes, assignments, reviewed) {
+  const hasSubmissions = DB.submissions.some(s => { const a = assignmentById(s.assignmentId), c = a && classById(a.classId); return a && c && !a.sample && !c.sample; });
+  const items = [
+    { done: classes.length > 0, title: 'Create your first class', desc: 'Set up a class where you can organize students and assignments.', label: 'Create a class', act: 'newClassDlg' },
+    { done: assignments.length > 0, title: 'Create your first assignment', desc: 'Prepare an activity and decide how students can use AI.', label: 'Create an assignment', act: 'gettingStartedAssignment' },
+    { done: false, guidance: true, title: 'Share your class with students', desc: 'Download your class file and send it to your students. Muna cannot confirm sharing automatically.', label: 'Learn how to share', act: 'gettingStartedShare' },
+    { done: reviewed, title: 'Review your first submission', desc: 'Explore how Muna helps you review student work and understanding.', label: hasSubmissions ? 'Review a submission' : 'View sample submission', act: hasSubmissions ? 'gettingStartedReview' : 'onboardingSample' }
+  ];
+  const trackableDone = items.filter(x => !x.guidance).every(x => x.done);
+  const doneCount = items.filter(x => x.done).length;
+  const details = trackableDone ? '' : ' open';
+  return `<section class="card get-started" aria-labelledby="h-start"><details${details}><summary><span><span class="eyebrow">Getting started</span><b id="h-start">${trackableDone ? "You're all set!" : 'Your classroom starts here.'}</b><span class="small muted">${trackableDone ? 'Your classroom is ready.' : 'Follow these steps to set up your class and start reviewing student work.'}</span></span><span class="get-started-count">${doneCount} of 3 complete</span></summary><div class="get-started-list">${items.map((x, i) => `<div class="get-started-item ${x.done ? 'complete' : ''}"><span class="get-started-mark" aria-label="${x.done ? 'Completed' : x.guidance ? 'Guidance' : 'Not completed'}">${x.done ? ic('check') : x.guidance ? ic('info') : i + 1}</span><div class="grow"><b>${x.title}</b><p>${x.desc}</p></div><button class="btn ${x.done ? 'ghost' : 'coral'} sm" data-act="${x.act}">${x.label}</button></div>`).join('')}</div></details></section>`;
+}
+
+function classChoiceDialog(action, title) {
+  const classes = actualTeacherClasses();
+  openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button><h2>${title}</h2><p class="small muted">Choose the class you want to continue with.</p><ul class="list">${classes.map(c => `<li><button class="item" data-act="gettingStartedClass" data-v="${action}:${c.id}"><span class="grow"><b>${esc(c.name)}</b><span class="meta">${esc(c.subject)}</span></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ul>`);
+}
+
+ACT.gettingStartedClass = v => { const [action, cid] = String(v).split(':'); closeDialog(); if (action === 'assign') go(`teacher/assign/new/${cid}`); else ACT.shareDlg(cid); };
+ACT.gettingStartedAssignment = () => { const classes = actualTeacherClasses(); if (!classes.length) { toast('Create a class first.'); ACT.newClassDlg(); } else if (classes.length === 1) go(`teacher/assign/new/${classes[0].id}`); else classChoiceDialog('assign', 'Create an assignment'); };
+ACT.gettingStartedShare = () => { const classes = actualTeacherClasses(); if (!classes.length) { toast('Create a class first.'); ACT.newClassDlg(); } else if (classes.length === 1) ACT.shareDlg(classes[0].id); else classChoiceDialog('share', 'Share a class'); };
+ACT.gettingStartedReview = () => { const s = DB.submissions.find(s => { const a = assignmentById(s.assignmentId), c = a && classById(a.classId); return a && c && !a.sample && !c.sample; }); if (s) go(`teacher/review/${s.id}`); else ACT.onboardingSample(); };
 ACT.newClassDlg = () => openDialog(`
   <button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button>
   <h2>New class</h2>

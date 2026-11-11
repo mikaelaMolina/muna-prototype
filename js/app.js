@@ -188,6 +188,7 @@ Object.assign(ACT, {
     document.body.insertAdjacentHTML('beforeend', `<div class="menu" id="menu" role="menu">
       <div class="who">${role === 'teacher' ? 'Teacher' : 'Student'}<br><b style="color:var(--ink);font-size:14px">${esc(name)}</b></div>
       <button role="menuitem" data-act="openOnboarding">${ic('circle-help')} How Muna works</button>
+      ${role === 'teacher' ? `<button role="menuitem" data-act="openGettingStarted">${ic('list-checks')} Getting started checklist</button>` : ''}
       <a href="#/settings" role="menuitem">${ic('database')} Data &amp; export</a>
       <button role="menuitem" data-act="switchRole">${ic('repeat')} Switch account</button>
       <button role="menuitem" data-act="signOut">${ic('log-out')} Sign out</button></div>`);
@@ -228,6 +229,7 @@ Object.assign(ACT, {
     if (DB.teacher) { DB.teacher.onboardingDismissed = false; saveDB(); }
     closeMenu(); go('teacher/onboarding');
   },
+  openGettingStarted: () => { closeMenu(); go('teacher'); setTimeout(() => { const card = document.querySelector('.get-started'); if (card) { const details = card.querySelector('details'); if (details) details.open = true; card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 60); },
   continueStudent: id => { DB.session = { role: 'student', studentId: id }; saveDB(); go('student'); }
 });
 
