@@ -3,19 +3,21 @@
    startTour([{ target, title, body }], onEnd)
      target: CSS selector list; the first *visible* match is used, so one step can point at the
              desktop nav link or the phone tab bar. Leave it out for a centered welcome card.
+     path:   optional screen to open first (multi-screen tutorials). A step whose target is
+             missing on its screen is skipped.
    Keys: Esc closes, Left/Right move between steps. Any way of leaving the tour calls onEnd once. */
 'use strict';
 
-let TOUR = null; // { steps, i, onEnd, ret }
+let TOUR = null; // { steps, i, dir, onEnd, ret, moving }
 const isVisible = el => !!(el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
 const tourTarget = st => st && st.target ? $$(st.target).find(isVisible) || null : null;
 
 function startTour(steps, onEnd) {
   endTour(false);
-  // Drop steps whose element isn't on this screen (for example, no classes yet).
-  steps = steps.filter(st => !st.target || tourTarget(st));
+  // Single-screen tours: drop steps whose element isn't here (for example, no classes yet).
+  if (!steps.some(st => st.path)) steps = steps.filter(st => !st.target || tourTarget(st));
   if (!steps.length) return;
-  TOUR = { steps, i: 0, onEnd, ret: document.activeElement };
+  TOUR = { steps, i: 0, dir: 1, onEnd, ret: document.activeElement, moving: false };
   document.body.insertAdjacentHTML('beforeend', `<div class="tour" id="tour">
     <div class="tour-hole" aria-hidden="true"></div>
     <div class="tour-tip" role="dialog" aria-modal="true" aria-labelledby="tourT" aria-describedby="tourB"></div></div>`);
@@ -26,7 +28,17 @@ function startTour(steps, onEnd) {
 }
 
 function showTourStep() {
-  const { steps, i } = TOUR, st = steps[i], last = i === steps.length - 1, el = tourTarget(st);
+  const { steps, i } = TOUR, st = steps[i];
+  // Open the step's screen first, then wait for its element to appear.
+  if (st.path && currentPath() !== st.path) {
+    TOUR.moving = true;
+    $('#tour').classList.add('moving');
+    go(st.path);
+    return waitForStep(0);
+  }
+  const el = tourTarget(st);
+  if (st.target && !el) return skipTourStep();
+  const last = i === steps.length - 1;
   const dots = steps.map((_, j) => `<i class="${j === i ? 'on' : j < i ? 'past' : ''}"></i>`).join('');
   $('#tour .tour-tip').innerHTML = `
     <div class="tour-head"><img src="assets/muni.svg" alt=""><span class="tour-count">${steps.length > 1 ? `${i + 1} of ${steps.length}` : ''}</span>
@@ -34,7 +46,7 @@ function showTourStep() {
     <h2 id="tourT">${st.title}</h2>
     <p id="tourB">${st.body}</p>
     <div class="tour-foot">
-      <span class="tour-dots" aria-hidden="true">${dots}</span>
+      ${steps.length > 7 ? `<span class="tour-prog" aria-hidden="true"><i style="width:${(i + 1) / steps.length * 100}%"></i></span>` : `<span class="tour-dots" aria-hidden="true">${dots}</span>`}
       <span class="tour-btns">
         ${i === 0 ? (last ? '' : '<button class="linkbtn" data-act="tourEnd">Skip</button>') : `<button class="btn ghost sm" data-act="tourBack">Back</button>`}
         <button class="btn coral sm" data-act="tourNext" id="tourNextBtn">${last ? (st.doneLabel || 'Got it') : i === 0 ? (st.nextLabel || 'Show me around') : 'Next'}</button>
@@ -47,6 +59,23 @@ function showTourStep() {
   }
   positionTour();
   $('#tourNextBtn').focus({ preventScroll: true });
+}
+
+function waitForStep(tries) {
+  setTimeout(() => {
+    if (!TOUR) return;
+    const st = TOUR.steps[TOUR.i];
+    if (st.target && !tourTarget(st) && tries < 8) return waitForStep(tries + 1);
+    TOUR.moving = false;
+    $('#tour').classList.remove('moving');
+    showTourStep();
+  }, 120);
+}
+/** Move past a step whose element isn't on screen, in the direction the person was going. */
+function skipTourStep() {
+  const n = TOUR.i + TOUR.dir;
+  if (n < 0 || n >= TOUR.steps.length) return endTour();
+  TOUR.i = n; showTourStep();
 }
 
 function positionTour() {
@@ -88,8 +117,8 @@ function endTour(callDone = true) {
 }
 
 Object.assign(ACT, {
-  tourNext: () => { if (!TOUR) return; if (TOUR.i >= TOUR.steps.length - 1) endTour(); else { TOUR.i++; showTourStep(); } },
-  tourBack: () => { if (TOUR && TOUR.i > 0) { TOUR.i--; showTourStep(); } },
+  tourNext: () => { if (!TOUR || TOUR.moving) return; if (TOUR.i >= TOUR.steps.length - 1) endTour(); else { TOUR.i++; TOUR.dir = 1; showTourStep(); } },
+  tourBack: () => { if (TOUR && !TOUR.moving && TOUR.i > 0) { TOUR.i--; TOUR.dir = -1; showTourStep(); } },
   tourEnd: () => endTour()
 });
 
@@ -105,5 +134,5 @@ document.addEventListener('keydown', e => {
     f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
   }
 });
-// Leaving the screen (for example the browser Back button) ends the tour.
-window.addEventListener('hashchange', () => endTour());
+// Leaving the screen yourself (for example the browser Back button) ends the tour.
+window.addEventListener('hashchange', () => { if (TOUR && !TOUR.moving) endTour(); });

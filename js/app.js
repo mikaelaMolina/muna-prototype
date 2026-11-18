@@ -178,8 +178,8 @@ Object.assign(ACT, {
     const role = DB.session.role, name = role === 'teacher' ? DB.teacher?.name : currentStudent()?.name;
     document.body.insertAdjacentHTML('beforeend', `<div class="menu" id="menu" role="menu">
       <div class="who">${role === 'teacher' ? 'Teacher' : 'Student'}<br><b style="color:var(--ink);font-size:14px">${esc(name)}</b></div>
-      <button role="menuitem" data-act="openOnboarding">${ic('circle-help')} Take the tour</button>
-      ${role === 'teacher' ? `<button role="menuitem" data-act="openGettingStarted">${ic('list-checks')} Getting started checklist</button>` : ''}
+      <button role="menuitem" data-act="openOnboarding">${ic('circle-help')} Quick tour</button>
+      ${role === 'teacher' ? `<button role="menuitem" data-act="fullTutorial">${ic('book-open')} Full tutorial</button>` : ''}
       <a href="#/settings" role="menuitem">${ic('database')} Data &amp; export</a>
       <button role="menuitem" data-act="switchRole">${ic('repeat')} Switch account</button>
       <button role="menuitem" data-act="signOut">${ic('log-out')} Sign out</button></div>`);
@@ -221,12 +221,6 @@ Object.assign(ACT, {
     closeMenu();
     const role = DB.session.role === 'student' ? 'student' : 'teacher';
     TOUR_REQUEST = role; go(role);
-  },
-  openGettingStarted: () => {
-    closeMenu();
-    if (DB.teacher) { DB.teacher.gsHidden = false; saveDB(); }
-    go('teacher');
-    setTimeout(() => $('.get-started')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
   },
   continueStudent: id => { DB.session = { role: 'student', studentId: id }; saveDB(); go('student'); }
 });

@@ -34,29 +34,59 @@ FORM.teacherSetup = fd => {
 let TOUR_REQUEST = null; // 'teacher' | 'student': replay the tour when that home screen mounts
 const teacherTourDue = () => DB.teacher && !DB.teacher.tourDone && !DB.teacher.onboardingCompleted && !DB.teacher.onboardingDismissed;
 function startTeacherTour() {
-  const first = esc(String(DB.teacher?.name || '').trim());
+  const name = esc(String(DB.teacher?.name || '').trim());
   startTour([
-    { title: `Welcome to Muna${first ? `, ${first}` : ''}!`, body: 'Here’s a quick look around. It takes about 30 seconds.' },
-    { target: '[data-tour="new-class"]', title: 'Start with a class', body: 'Make one class for each section you teach. Students join with its code.' },
-    { target: '.get-started', title: 'Your next step', body: 'This checklist always shows the one thing to do next.' },
-    { target: '#navlinks a[href="#/teacher/inbox"], #tabbar a[href="#/teacher/inbox"]', title: 'Student work lands here', body: 'See how each piece was made, check understanding, then decide.' },
-    { target: '#navlinks a[href="#/settings"], #tabbar a[href="#/settings"]', title: 'Your data stays on this device', body: 'Use Data to export a file and open it on another device.' },
-    { target: '#meBtn', title: 'Need a refresher?', body: 'Replay this tour anytime from your profile menu.', doneLabel: 'Start using Muna' }
+    { title: `Welcome${name ? `, ${name}` : ''}!`, body: 'A 30-second look around.', nextLabel: 'Show me' },
+    { target: '[data-tour="new-class"]', title: '1 · Make a class', body: 'Students join it with a code.' },
+    { target: '[data-tour="classes"]', title: '2 · Post assignments', body: 'Open a class to add work and set AI rules.' },
+    { target: '#navlinks a[href="#/teacher/inbox"], #tabbar a[href="#/teacher/inbox"]', title: '3 · Review work', body: 'See how it was made, then decide.' },
+    { target: '#meBtn', title: 'Stuck?', body: 'The full tutorial is in this menu.', doneLabel: 'Done' }
   ], () => { if (DB.teacher) { DB.teacher.tourDone = true; saveDB(); } });
 }
+
+/* The full tutorial visits each real screen. It uses the teacher's own class when there is one,
+   otherwise the sample class, so every screen has something to show. */
+function startFullTutorial() {
+  let usedSample = false;
+  if (!actualTeacherClasses().length && !DB.classes.some(c => c.sample)) { loadSampleData(); saveDB(); usedSample = true; if (currentPath() === 'teacher') refresh(); }
+  const c = actualTeacherClasses()[0] || DB.classes.find(x => x.sample) || DB.classes[0];
+  const subs = DB.submissions.filter(x => x.status !== 'draft' && assignmentById(x.assignmentId));
+  const sub = subs.find(x => assignmentById(x.assignmentId).classId === c.id && NEEDS_TEACHER.includes(x.status))
+    || subs.find(x => assignmentById(x.assignmentId).classId === c.id) || subs[0];
+  const cls = `teacher/class/${c.id}`, card = id => `.card:has(#${id})`;
+  startTour([
+    { path: 'teacher', title: 'Full tutorial', body: `We’ll go through each screen, one step at a time. About 2 minutes.${usedSample ? ' We added the sample class so there is real work to look at.' : ''}`, nextLabel: 'Start' },
+    { path: 'teacher', target: '[data-tour="new-class"]', title: 'Create a class', body: 'Tap + New class. Add a name, a subject, and your grading system.' },
+    { path: 'teacher', target: '[data-tour="classes"] .tile:not(.add)', title: 'Open a class', body: 'Each class keeps its students, assignments, and grades together.' },
+    { path: cls, target: '[data-tour="class-code"]', title: 'Your class code', body: 'Students type this code to join your class.' },
+    { path: cls, target: '[data-tour="share"]', title: 'Share with students', body: 'Download the class file and send it to students. Their finished work comes back as a file you import here.' },
+    { path: cls, target: '.tabs', title: 'Class sections', body: 'Switch between assignments, students, grades, games, and grading.' },
+    { path: cls, target: '[data-tour="new-assignment"]', title: 'Post an assignment', body: 'Let’s open the assignment form.' },
+    { path: `teacher/assign/new/${c.id}`, target: card('h-a1'), title: 'The task', body: 'Give it a title, a due date, and points.' },
+    { path: `teacher/assign/new/${c.id}`, target: card('h-a2'), title: 'The AI rule', body: 'Choose if AI is not allowed, allowed for certain uses, or required.' },
+    { path: `teacher/assign/new/${c.id}`, target: card('h-a4'), title: 'Checks', body: 'Think First and the Understanding Check help students show their own thinking.' },
+    { path: `teacher/assign/new/${c.id}`, target: card('h-prev'), title: 'Student preview', body: 'This is what students will see. Post it when it looks right.' },
+    { path: 'teacher/inbox', target: '#main .list, #main .empty', title: 'To review', body: 'Work that needs you waits here, oldest first.' },
+    ...(sub ? [
+      { path: `teacher/review/${sub.id}`, target: '.sumcard', title: 'Quick summary', body: 'Facts about how the work was made. Never an AI score.' },
+      { path: `teacher/review/${sub.id}`, target: card('h-gr'), title: 'See how it was made', body: 'Tap a bar to read each saved version. Pasted text is highlighted.' },
+      { path: `teacher/review/${sub.id}`, target: card('h-uc'), title: 'Check understanding', body: 'Rate the student’s answers to questions about their own work.' },
+      { path: `teacher/review/${sub.id}`, target: card('h-dc'), title: 'Decide', body: 'Accept with a score, ask a follow-up, or raise a concern the student can answer.' }
+    ] : []),
+    { path: `${cls}/grades`, target: '.tablewrap, .tabs', title: 'Grades', body: 'Accepted scores fill the gradebook. Download it as CSV or print it.' },
+    { path: 'settings', target: '#navlinks a[href="#/settings"], #tabbar a[href="#/settings"]', title: 'Your data', body: 'Everything is saved in this browser. Export a file to move it to another device.' },
+    { path: 'teacher', target: '#meBtn', title: 'You’re ready!', body: 'Replay the tutorial anytime from this menu.', doneLabel: 'Finish' }
+  ], () => { if (DB.teacher) { DB.teacher.tourDone = true; saveDB(); } });
+}
+ACT.fullTutorial = () => { closeMenu(); startFullTutorial(); };
+
 // Old walkthrough links now open the dashboard with the tour.
 addRoute('teacher/onboarding/:step?', { role: 'teacher', render() { TOUR_REQUEST = 'teacher'; go('teacher'); return null; } });
 
-ACT.onboardingSample = () => openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button><p class="eyebrow">Sample submission · not saved</p><h2>How a review works</h2><div class="walk-sample-list"><div><b>1 · Process View</b><span>How the draft grew over time.</span></div><div><b>2 · Understanding Check</b><span>The student explains their own work.</span></div><div><b>3 · Your decision</b><span>Accept, ask a follow-up, or raise a concern.</span></div></div><p class="tiny muted">Process information supports your judgment. It is not proof of AI use.</p><button class="btn coral block" data-act="loadSample">Open the sample class</button>`, { wide: true });
 
 /* ================================================================ dashboard */
 const pendingReviews = () => DB.submissions.filter(s => NEEDS_TEACHER.includes(s.status) && assignmentById(s.assignmentId)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
 const actualTeacherClasses = () => DB.classes.filter(c => !c.sample);
-const actualTeacherAssignments = () => DB.assignments.filter(a => { const c = classById(a.classId); return c && !c.sample && !a.sample; });
-const actualTeacherReviewed = () => DB.submissions.some(s => {
-  const a = assignmentById(s.assignmentId), c = a && classById(a.classId);
-  return a && c && !a.sample && !c.sample && (s.review?.history?.length || s.review?.firstDecisionMs);
-});
 const reviewItem = s => {
   const a = assignmentById(s.assignmentId), st = studentById(s.studentId);
   return `<li><a class="item" href="#/teacher/review/${s.id}"><span class="avatar" aria-hidden="true">${esc(initials(st?.name))}</span>
@@ -69,12 +99,9 @@ addRoute('teacher', {
     const reviewedSubmissions = DB.submissions.filter(s => s.review.firstDecisionMs);
     const avg = reviewedSubmissions.length ? reviewedSubmissions.reduce((t, s) => t + s.review.firstDecisionMs, 0) / reviewedSubmissions.length : 0;
     const students = new Set(DB.classes.flatMap(c => studentsInClass(c.id).map(s => s.id))).size;
-    const actualClasses = actualTeacherClasses(), actualAssignments = actualTeacherAssignments(), reviewed = actualTeacherReviewed();
-    const gettingStarted = gettingStartedCard(actualClasses, actualAssignments, reviewed);
     return `
     <div class="pagehead"><div><p class="eyebrow">${esc(DB.teacher.school || 'Teacher')}</p><h1>Magandang araw, ${esc(DB.teacher.name)}</h1></div>
       <button class="btn coral" data-act="newClassDlg" data-tour="new-class">+ New class</button></div>
-    ${gettingStarted}
     ${DB.classes.length ? `<div class="bigstats">
       <a class="bigstat" href="#/teacher/inbox" style="background:var(--coral);color:#fff;text-decoration:none"><b>${pending.length}</b><span>to review</span></a>
       <div class="bigstat" style="background:var(--skybg)"><b>${students}</b><span>students</span></div>
@@ -82,7 +109,7 @@ addRoute('teacher', {
     </div>` : ''}
     ${pending.length ? `<section aria-labelledby="h-rev" style="margin-bottom:28px"><div class="row between"><h2 id="h-rev">Up next</h2>${pending.length > 3 ? '<a class="linkbtn" href="#/teacher/inbox">See all</a>' : ''}</div>
       <ul class="list">${pending.slice(0, 3).map(reviewItem).join('')}</ul></section>` : ''}
-    <section aria-labelledby="h-cls">
+    <section aria-labelledby="h-cls" data-tour="classes">
       <h2 id="h-cls">Classes</h2>
       <div class="tiles">
         ${DB.classes.map((c, i) => {
@@ -93,7 +120,8 @@ addRoute('teacher', {
         }).join('')}
         <button class="tile add" data-act="newClassDlg"><span class="plus" aria-hidden="true">+</span>New class</button>
       </div>
-    </section>`;
+    </section>
+    <p class="helpline">${ic('circle-help')} Having a hard time using Muna? <button class="linkbtn" data-act="fullTutorial">Take the full tutorial</button></p>`;
   },
   mount() {
     if (TOUR || !(TOUR_REQUEST === 'teacher' || teacherTourDue())) return;
@@ -102,39 +130,6 @@ addRoute('teacher', {
   }
 });
 
-/* One compact card: a progress bar, the single next step, and the rest tucked away. */
-function gettingStartedCard(classes, assignments, reviewed) {
-  if (DB.teacher.gsHidden) return '';
-  const hasSubmissions = DB.submissions.some(s => { const a = assignmentById(s.assignmentId), c = a && classById(a.classId); return a && c && !a.sample && !c.sample; });
-  const items = [
-    { done: classes.length > 0, title: 'Create a class', desc: 'One for each section you teach.', label: 'Create a class', act: 'newClassDlg' },
-    { done: assignments.length > 0, title: 'Post an assignment', desc: 'Set the task and how students may use AI.', label: 'Create an assignment', act: 'gettingStartedAssignment' },
-    { done: hasSubmissions, title: 'Share it with students', desc: 'Send them the class file and the class code.', label: 'Share class', act: 'gettingStartedShare' },
-    { done: reviewed, title: 'Review student work', desc: 'See how it was made, then decide.', label: hasSubmissions ? 'Review a submission' : 'See how a review works', act: hasSubmissions ? 'gettingStartedReview' : 'onboardingSample' }
-  ];
-  const doneCount = items.filter(x => x.done).length, next = items.find(x => !x.done);
-  const hide = `<button class="iconbtn gs-hide" data-act="hideGettingStarted" aria-label="Hide the getting started checklist" title="Hide">${ic('x')}</button>`;
-  if (!next) return `<section class="card get-started done" aria-label="Getting started">${badge('party-popper', 'green', 'ico')}<span class="grow"><b>You’re all set!</b><span class="small muted"> Your classroom is ready.</span></span>${hide}</section>`;
-  return `<section class="card get-started" aria-labelledby="h-start">
-    <div class="gs-head"><span class="grow"><span class="eyebrow">Getting started · ${doneCount} of ${items.length} done</span>
-      <b id="h-start">Next: ${next.title}</b></span>${hide}</div>
-    <div class="gs-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="${items.length}" aria-valuenow="${doneCount}"><i style="width:${doneCount / items.length * 100}%"></i></div>
-    <div class="gs-next"><p class="small muted">${next.desc}</p><button class="btn coral sm" data-act="${next.act}">${next.label}</button></div>
-    <details class="gs-all"><summary class="small">See all steps</summary>
-      <ol class="gs-list">${items.map(x => `<li class="${x.done ? 'complete' : x === next ? 'current' : ''}"><span class="get-started-mark">${x.done ? ic('check') : ''}</span><span class="grow">${x.title}${x.done ? '<span class="sr-only"> (done)</span>' : ''}</span>${!x.done && x !== next ? `<button class="linkbtn small" data-act="${x.act}">${x.label}</button>` : ''}</li>`).join('')}</ol>
-    </details></section>`;
-}
-ACT.hideGettingStarted = () => { DB.teacher.gsHidden = true; saveDB(); refresh(); toast('Checklist hidden. Bring it back from your profile menu.', 3500); };
-
-function classChoiceDialog(action, title) {
-  const classes = actualTeacherClasses();
-  openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button><h2>${title}</h2><p class="small muted">Choose the class you want to continue with.</p><ul class="list">${classes.map(c => `<li><button class="item" data-act="gettingStartedClass" data-v="${action}:${c.id}"><span class="grow"><b>${esc(c.name)}</b><span class="meta">${esc(c.subject)}</span></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ul>`);
-}
-
-ACT.gettingStartedClass = v => { const [action, cid] = String(v).split(':'); closeDialog(); if (action === 'assign') go(`teacher/assign/new/${cid}`); else ACT.shareDlg(cid); };
-ACT.gettingStartedAssignment = () => { const classes = actualTeacherClasses(); if (!classes.length) { toast('Create a class first.'); ACT.newClassDlg(); } else if (classes.length === 1) go(`teacher/assign/new/${classes[0].id}`); else classChoiceDialog('assign', 'Create an assignment'); };
-ACT.gettingStartedShare = () => { const classes = actualTeacherClasses(); if (!classes.length) { toast('Create a class first.'); ACT.newClassDlg(); } else if (classes.length === 1) ACT.shareDlg(classes[0].id); else classChoiceDialog('share', 'Share a class'); };
-ACT.gettingStartedReview = () => { const s = DB.submissions.find(s => { const a = assignmentById(s.assignmentId), c = a && classById(a.classId); return a && c && !a.sample && !c.sample; }); if (s) go(`teacher/review/${s.id}`); else ACT.onboardingSample(); };
 ACT.newClassDlg = () => openDialog(`
   <button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button>
   <h2>New class</h2>
@@ -176,9 +171,9 @@ addRoute('teacher/class/:id/:tab?', {
     return `
     <div class="pagehead">
       <div><p class="eyebrow">${esc(c.subject)}</p><h1>${esc(c.name)}</h1></div>
-      <div class="row wrap"><span class="codechip" style="font-size:16px;padding:8px 14px" title="Class code">${esc(c.code)}</span>
-        <button class="btn ghost sm" data-act="shareDlg" data-v="${c.id}">Share</button>
-        <a class="btn coral" href="#/teacher/assign/new/${c.id}">+ Assignment</a></div>
+      <div class="row wrap"><span class="codechip" style="font-size:16px;padding:8px 14px" title="Class code" data-tour="class-code">${esc(c.code)}</span>
+        <button class="btn ghost sm" data-act="shareDlg" data-v="${c.id}" data-tour="share">Share</button>
+        <a class="btn coral" href="#/teacher/assign/new/${c.id}" data-tour="new-assignment">+ Assignment</a></div>
     </div>
     <nav class="tabs" aria-label="Class sections">${CLASS_TABS.map(([k, l]) => `<a href="#/teacher/class/${c.id}${k ? '/' + k : ''}" ${k === tab ? 'aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     ${body(c)}`;
