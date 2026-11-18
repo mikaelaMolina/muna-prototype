@@ -168,12 +168,20 @@ addRoute('start/:role?', {
     if (p.role === 'teacher') { if (DB.teacher) { DB.session = { role: 'teacher', studentId: null }; saveDB(); go('teacher'); return null; } go('teacher/setup'); return null; }
     if (p.role === 'student') { go('student/login'); return null; }
     return `
-    <div class="center" style="margin-bottom:24px"><h1>Welcome to Muna</h1><p class="muted">Who’s using Muna?</p></div>
+    <div class="center" style="margin-bottom:28px"><h1>Welcome to Muna</h1><p class="muted" style="margin:0">Who’s using Muna today?</p></div>
     <div class="roles">
-      <a class="role t" href="#/start/teacher"><h2>Teacher</h2><p>${DB.teacher ? `Continue as ${esc(DB.teacher.name)}` : 'Set up your classes'}</p><span class="go">Continue ${ic('arrow-right')}</span><img src="assets/wordmark.svg" alt="" style="width:170px;right:16px;bottom:20px"></a>
-      <a class="role s" href="#/start/student"><h2>Student</h2><p>Join with a class code</p><span class="go">Continue ${ic('arrow-right')}</span><img src="assets/muni.svg" alt=""></a>
+      <a class="role t" href="#/start/teacher">
+        <span class="role-ic" aria-hidden="true">${ic('school')}</span>
+        <h2>I’m a teacher</h2><p>${DB.teacher ? `Welcome back, ${esc(DB.teacher.name)}.` : 'Set up your classes in about a minute.'}</p>
+        <ul class="role-list"><li>${ic('check')} Set AI rules for each task</li><li>${ic('check')} See how work was made</li><li>${ic('check')} Grade with DepEd weights</li></ul>
+        <span class="go">${DB.teacher ? 'Continue' : 'Get started'} ${ic('arrow-right')}</span></a>
+      <a class="role s" href="#/start/student">
+        <span class="role-ic" aria-hidden="true">${ic('book-open')}</span>
+        <h2>I’m a student</h2><p>Join your class with the code from your teacher.</p>
+        <ul class="role-list"><li>${ic('check')} No email or password</li><li>${ic('check')} Your work saves as you go</li><li>${ic('check')} Play the Evidence Game</li></ul>
+        <span class="go">Join a class ${ic('arrow-right')}</span><img src="assets/muni.svg" alt=""></a>
     </div>
-    <p class="center small muted" style="margin-top:24px">New here? <button class="linkbtn" data-act="loadSample">Open the sample class</button></p>`;
+    <p class="center small muted" style="margin-top:24px">Just exploring? <button class="linkbtn" data-act="loadSample">Open the sample class</button></p>`;
   }
 });
 
@@ -201,6 +209,7 @@ addRoute('settings', {
     </section>
     <section class="card">
       <h2>Start over</h2>
+      <p class="small muted">Deletes every class, student, and submission saved in this browser. Export first if you want to keep anything.</p>
       <button class="btn danger" data-act="resetAll">Erase all data</button>
     </section>`;
   }

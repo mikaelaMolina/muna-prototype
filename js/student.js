@@ -22,7 +22,7 @@ addRoute('student/login', {
       <div id="joinErr" role="alert"></div>
       <button class="btn coral lg block">Join</button>
     </form>
-    ${here.length ? `<h2 style="margin-top:24px">Continue as</h2>
+    ${here.length ? `<h2 style="margin-top:28px">Already joined on this device?</h2>
       <ul class="list">${here.map(s => `<li><button class="item" data-act="continueStudent" data-v="${s.id}"><span class="avatar" aria-hidden="true">${esc(initials(s.name))}</span><span class="grow"><b>${esc(s.name)}</b></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ul>` : `
       <section class="card flat" style="margin-top:24px;text-align:center">
         <b>No classes on this device yet</b>
@@ -66,8 +66,8 @@ addRoute('student', {
     <div class="pagehead"><div><p class="eyebrow">Student</p><h1>Hi, ${esc(me.name.split(' ')[0])}</h1></div>
       <a class="btn ${games.length ? 'coral' : 'ghost'}" href="#/student/play">${ic('gamepad-2')} Join a game</a></div>
     <div class="bigstats">
-      <div class="bigstat" style="background:var(--coral);color:#fff"><b>${todo.length}</b><span>to do</span></div>
-      <div class="bigstat" style="background:var(--cream)"><b>${action.length}</b><span>need reply</span></div>
+      <div class="bigstat ${todo.length ? 'hot' : 'calm'}"><b>${todo.length}</b><span>to do</span></div>
+      <div class="bigstat ${action.length ? '' : 'calm'}" style="${action.length ? 'background:var(--cream)' : ''}"><b>${action.length}</b><span>need reply</span></div>
       <div class="bigstat" style="background:var(--skybg)"><b>${all.filter(x => x.sub?.status === 'accepted').length}</b><span>done</span></div>
     </div>
     ${games.length ? `<a class="card navy" href="#/student/game/${games[0].id}" style="display:flex;gap:14px;align-items:center;text-decoration:none">

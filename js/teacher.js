@@ -103,7 +103,7 @@ addRoute('teacher', {
     <div class="pagehead"><div><p class="eyebrow">${esc(DB.teacher.school || 'Teacher')}</p><h1>Magandang araw, ${esc(DB.teacher.name)}</h1></div>
       <button class="btn coral" data-act="newClassDlg" data-tour="new-class">+ New class</button></div>
     ${DB.classes.length ? `<div class="bigstats">
-      <a class="bigstat" href="#/teacher/inbox" style="background:var(--coral);color:#fff;text-decoration:none"><b>${pending.length}</b><span>to review</span></a>
+      <a class="bigstat ${pending.length ? 'hot' : 'calm'}" href="#/teacher/inbox" style="text-decoration:none"><b>${pending.length}</b><span>to review</span></a>
       <div class="bigstat" style="background:var(--skybg)"><b>${students}</b><span>students</span></div>
       <div class="bigstat" style="background:var(--cream)"><b>${avg ? fmtDur(avg) : '–'}</b><span>avg. review</span></div>
     </div>` : ''}
@@ -187,7 +187,7 @@ function classAssignments(c) {
       const subs = subsForAssignment(a.id), done = subs.filter(s => s.status !== 'draft').length, todo = subs.filter(s => NEEDS_TEACHER.includes(s.status)).length;
       return `<li><a class="item" href="#/teacher/assign/${a.id}">${badge(RULES[a.rule].icon, RULES[a.rule].tone, 'num')}
         <span class="grow"><b>${esc(a.title)}</b><span class="meta">Due ${esc(fmtDue(a.due))} · ${esc(a.points)} pts</span></span>
-        ${todo ? `<span class="chip y">${todo} to review</span>` : ''}<span class="chip n">${done}/${n}</span><span class="go" aria-hidden="true">›</span></a></li>`;
+        ${todo ? `<span class="chip y">${todo} to review</span>` : ''}<span class="chip n" title="Turned in">${done}/${n} in</span><span class="go" aria-hidden="true">›</span></a></li>`;
     }).join('')}</ul>`
     : `<div class="empty">${badge('file-text', 'coral', 'big')}No assignments yet.<br><a class="btn coral sm" style="margin-top:12px" href="#/teacher/assign/new/${c.id}">Create one</a></div>`;
 }
@@ -450,9 +450,9 @@ addRoute('teacher/assign/:aid', {
     <div class="chips"><span class="chip">${ic(RULES[a.rule].icon)} ${RULES[a.rule].label}</span><span class="chip y">Due ${esc(fmtDue(a.due))}</span>
       <span class="chip s">${esc(a.points)} pts · ${esc(comp ? comp.name : '–')}</span>${a.setupMs ? `<span class="chip n">${ic('timer')} set up in ${fmtDur(a.setupMs)}</span>` : ''}</div>
     <div class="bigstats">
-      <div class="bigstat" style="background:var(--coral);color:#fff"><b>${counts.submitted + counts.answered + counts.replied}</b><span>to review</span></div>
+      <div class="bigstat ${counts.submitted + counts.answered + counts.replied ? 'hot' : 'calm'}"><b>${counts.submitted + counts.answered + counts.replied}</b><span>to review</span></div>
       <div class="bigstat" style="background:var(--okbg)"><b>${counts.accepted}</b><span>accepted</span></div>
-      <div class="bigstat" style="background:var(--page)"><b>${rows.filter(r => !r.sub || r.sub.status === 'draft').length}</b><span>not in yet</span></div>
+      <div class="bigstat calm"><b>${rows.filter(r => !r.sub || r.sub.status === 'draft').length}</b><span>not in yet</span></div>
     </div>
     <h2>Students</h2>
     ${rows.length ? `<ul class="list">${rows.map(({ s, sub }) => {
