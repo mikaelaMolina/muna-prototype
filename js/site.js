@@ -2,8 +2,30 @@
 'use strict';
 
 /* ================================================================ landing */
+/* Sections float up into place as they scroll into view. Without IntersectionObserver,
+   or with reduced motion turned on, everything simply shows. */
+let REVEAL_IO = null;
+const REVEAL_TARGETS = '.showcase, .section-title, .section-lede, .compare > *, .bento > *, .circles > li, .tanong-strip > li, .faq details, .cta, .sitefoot';
+function mountReveal() {
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  REVEAL_IO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in');
+    REVEAL_IO.unobserve(e.target);
+  }), { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+  $$(REVEAL_TARGETS, $('#main')).forEach(el => {
+    // Stagger cards that sit side by side so they rise one after another.
+    const i = [...el.parentElement.children].filter(x => x.matches(REVEAL_TARGETS)).indexOf(el);
+    el.style.transitionDelay = `${Math.min(Math.max(i, 0), 5) * 80}ms`;
+    el.classList.add('reveal');
+    REVEAL_IO.observe(el);
+  });
+}
+
 addRoute('', {
   role: null, site: true,
+  mount: mountReveal,
+  leave() { if (REVEAL_IO) { REVEAL_IO.disconnect(); REVEAL_IO = null; } },
   render() {
     return `
     <section class="hero wrap" aria-labelledby="hero-h">
