@@ -1157,3 +1157,19 @@ details.more[open] > summary .chev { transform: rotate(180deg); }
 details.more .tl { margin-top: 12px; }
 .stephead { display: flex; align-items: center; gap: 10px; }
 .stepn { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--navy); color: #fff; font-size: 14px; font-weight: 800; }
+
+/* ---------- usability pass: explain disabled buttons, show current decision, phone shortcuts ---------- */
+.next-hint { margin: 16px 0 0; font-size: 13px; font-weight: 600; color: var(--gray); display: flex; align-items: center; gap: 6px; }
+.next-hint::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); flex: none; }
+.next-hint.ready { color: var(--ok); }
+.next-hint.ready::before { background: var(--ok); }
+.banner.ok { background: var(--okbg); }
+.banner > svg { flex: none; margin-top: 2px; }
+/* Keep version bars a readable width when there are only one or two of them. */
+.bar, .barlabels span { max-width: 72px; }
+/* Jumping to a card should land below the sticky top bar. */
+.card, form.card { scroll-margin-top: calc(var(--nav-h) + 12px); }
+/* The Decide button is a shortcut only when the review stacks into one column. */
+.jump-decide { margin-left: 8px; }
+@media (min-width: 980px) { .jump-decide { display: none; } }
+.get-started-item .chip.g { flex: none; }

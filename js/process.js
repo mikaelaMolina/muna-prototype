@@ -168,7 +168,7 @@ function buildUCQuestions(sub, a) {
 
 /** The AI rule exactly as students see it. Used in setup preview, sandbox, and review. */
 function ruleBanner(a) {
-  const disc = (a.disclose || []).map(d => (DISCLOSE.find(x => x[0] === d) || [, d])[1].replace(/^./, ch => ch.toLowerCase()));
+  const disc = (a.disclose || []).map(d => (DISCLOSE.find(x => x[0] === d) || [, d])[1].replace(/^./, ch => ch.toLowerCase()).replace(/\bthey\b/g, 'you').replace(/\btheir\b/g, 'your'));
   const txt = {
     prohibited: '<b>No AI for this task.</b> Muna saves your drafts so your own effort shows.',
     allowed: `<b>AI allowed only to:</b> ${esc(rolesText(a.roles))}. It may never write your final answer.`,

@@ -20,6 +20,7 @@ const LUCIDE = {
   'x': '<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
   'check': '<path d="M20 6 9 17l-5-5" />',
   'arrow-right': '<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />',
+  'arrow-down': '<path d="M12 5v14" /><path d="m19 12-7 7-7-7" />',
   'arrow-left': '<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />',
   'chevron-down': '<path d="m6 9 6 6 6-6" />',
   'chevron-right': '<path d="m9 18 6-6-6-6" />',

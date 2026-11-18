@@ -51,17 +51,20 @@ addRoute('student', {
   render() {
     const me = currentStudent(), classes = me.classIds.map(classById).filter(Boolean);
     const all = classes.flatMap(c => assignmentsInClass(c.id).map(a => ({ a, c, sub: subFor(a.id, me.id) })));
-    const todo = all.filter(x => !x.sub || x.sub.status === 'draft'), action = all.filter(x => x.sub && ['followup', 'concern'].includes(x.sub.status));
+    const byDue = (x, y) => String(x.a.due || '9999').localeCompare(String(y.a.due || '9999'));
+    const todo = all.filter(x => !x.sub || x.sub.status === 'draft').sort(byDue), action = all.filter(x => x.sub && ['followup', 'concern'].includes(x.sub.status));
+    const turnedIn = all.filter(x => x.sub && !['draft', 'followup', 'concern'].includes(x.sub.status)).sort((x, y) => (y.sub.submittedAt || 0) - (x.sub.submittedAt || 0));
     const games = DB.games.filter(g => g.open && me.classIds.includes(g.classId) && !g.plays.some(p => p.studentId === me.id && p.verdict));
     const row = ({ a, c, sub }) => {
       const late = isPastDue(a.due) && (!sub || sub.status === 'draft');
-      const flag = sub && ['followup', 'concern'].includes(sub.status) ? '<span class="chip r">Action needed</span>' : statusChip(sub);
+      const flag = sub && ['followup', 'concern'].includes(sub.status) ? '<span class="chip r">Reply needed</span>'
+        : !sub || sub.status === 'draft' ? `${late ? '<span class="chip r">Late</span>' : ''}<span class="chip ${sub ? 'y' : 'n'}">${sub ? 'Continue' : 'Start'}</span>` : statusChip(sub);
       return `<li><a class="item" href="#/student/work/${a.id}">${badge(RULES[a.rule].icon, RULES[a.rule].tone, 'num')}
-        <span class="grow"><b>${esc(a.title)}</b><span class="meta">${esc(c.subject)} · Due ${esc(fmtDue(a.due))}${late ? ' · late' : ''}</span></span>${flag}<span class="go" aria-hidden="true">›</span></a></li>`;
+        <span class="grow"><b>${esc(a.title)}</b><span class="meta">${esc(c.subject)} · Due ${esc(fmtDue(a.due))}</span></span>${flag}<span class="go" aria-hidden="true">›</span></a></li>`;
     };
     return `
     <div class="pagehead"><div><p class="eyebrow">Student</p><h1>Hi, ${esc(me.name.split(' ')[0])}</h1></div>
-      <a class="btn coral" href="#/student/play">${ic('gamepad-2')} Join a game</a></div>
+      <a class="btn ${games.length ? 'coral' : 'ghost'}" href="#/student/play">${ic('gamepad-2')} Join a game</a></div>
     <div class="bigstats">
       <div class="bigstat" style="background:var(--coral);color:#fff"><b>${todo.length}</b><span>to do</span></div>
       <div class="bigstat" style="background:var(--cream)"><b>${action.length}</b><span>need reply</span></div>
@@ -70,8 +73,10 @@ addRoute('student', {
     ${games.length ? `<a class="card navy" href="#/student/game/${games[0].id}" style="display:flex;gap:14px;align-items:center;text-decoration:none">
       ${badge('gamepad-2', 'yellow', 'lg')}<span class="grow"><b style="font-size:17px">Evidence Game is live</b><br><span class="muted small">${esc(scenarioById(games[0].scenarioId)?.title || '')}</span></span><span class="codechip">${esc(games[0].code)}</span></a>` : ''}
     ${action.length ? `<h2>Needs your reply</h2><ul class="list" style="margin-bottom:24px">${action.map(row).join('')}</ul>` : ''}
-    <h2>Assignments</h2>
-    ${all.length ? `<ul class="list">${all.filter(x => !action.includes(x)).map(row).join('')}</ul>` : `<div class="empty">${badge('book-open', 'coral', 'big')}No assignments yet.</div>`}
+    ${all.length ? `<h2>To do</h2>
+      ${todo.length ? `<ul class="list" style="margin-bottom:24px">${todo.map(row).join('')}</ul>` : `<div class="empty small" style="margin-bottom:24px">${badge('party-popper', 'green', 'big')}You’re all caught up.</div>`}
+      ${turnedIn.length ? `<h2>Turned in</h2><ul class="list">${turnedIn.map(row).join('')}</ul>` : ''}`
+      : `<h2>Assignments</h2><div class="empty">${badge('book-open', 'coral', 'big')}No assignments yet. Your teacher’s assignments will show up here.</div>`}
     <details class="card flat" style="margin-top:24px"><summary>Join another class</summary>
       <form data-form="joinAnother" novalidate style="margin-top:12px"><div class="row top wrap"><label class="grow" style="min-width:160px"><span class="sr-only">Class code</span><input type="text" name="code" class="code" maxlength="9" placeholder="MUN-XXXX"></label><button class="btn" style="margin-top:6px">Join</button></div>
       <p class="err" id="anotherErr" role="alert"></p></form></details>`;
@@ -157,10 +162,33 @@ function stepNav(sub, a, step) {
     return `<li>${open ? `<a href="#/student/work/${a.id}/${k}" class="${done ? 'done' : ''}" ${cur ? 'aria-current="step"' : ''}>${l}${done ? '<span class="sr-only"> (done)</span>' : ''}</a>` : `<span class="lock" title="Finish Think First first">${l}<span class="sr-only"> (locked)</span></span>`}</li>`;
   }).join('')}</ol>`;
 }
+/** Plain-language reason the Next/Submit button is still disabled ('' when the step is done). */
+function stepBlocker(sub, a, step) {
+  if (stepDone(sub, a, step)) return '';
+  const left = (text, min) => plural(min - words(text), 'more word');
+  switch (step) {
+    case 'think': return `Write ${left(sub.think.text, 15)} to start writing.`;
+    case 'write': return `Write ${left(sub.text, 20)} to continue.`;
+    case 'sources': return 'Add a source, or tick “I didn’t use sources.”';
+    case 'ai': return a.rule === 'required' ? 'Fill in every part of your AI note.' : 'Fill in your AI note, or tick “I didn’t use AI.”';
+    case 'check': {
+      const n = sub.uc.questions.filter((_, i) => words(sub.uc.answers[i]) < 5).length;
+      return `Answer ${n === 1 ? '1 more question' : `${n} more questions`} in 5+ words.`;
+    }
+  }
+  return '';
+}
+/** Re-check the current step after typing: enables the button and updates the hint. */
+function updateGate(sub, a, step) {
+  const b = $('#nextBtn'), h = $('#nextHint'), why = stepBlocker(sub, a, step);
+  if (b) b.disabled = !!why;
+  if (h) { h.textContent = why || 'Ready. Continue when you’re done.'; h.classList.toggle('ready', !why); }
+}
 function nextStepBtn(sub, a, step, label = 'Next') {
   const steps = stepsFor(a), i = steps.findIndex(([k]) => k === step), next = steps[i + 1];
-  const prev = steps[i - 1];
-  return `<div class="btnrow" style="margin-top:16px">
+  const prev = steps[i - 1], why = stepBlocker(sub, a, step);
+  return `<p class="next-hint ${why ? '' : 'ready'}" id="nextHint" aria-live="polite">${esc(why || 'Ready. Continue when you’re done.')}</p>
+  <div class="btnrow" style="margin-top:8px">
     ${prev ? `<a class="btn ghost lg" href="#/student/work/${a.id}/${prev[0]}" style="flex:0 1 auto">${ic('arrow-left')} Back</a>` : ''}
     ${next ? `<button class="btn coral lg" data-act="sbNext" data-v="${a.id}:${step}:${next[0]}" id="nextBtn" ${stepDone(sub, a, step) ? '' : 'disabled'}>${label} ${ic('arrow-right')}</button>`
            : `<button class="btn coral lg" data-act="sbSubmit" data-v="${a.id}" id="nextBtn" ${stepDone(sub, a, step) ? '' : 'disabled'}>Submit ${ic('check')}</button>`}
@@ -172,7 +200,7 @@ function workHeader(a) {
     <p class="eyebrow">${esc(c.subject)} · Due ${esc(fmtDue(a.due))}</p>
     <h1 style="font-size:22px">${esc(a.title)}</h1>
     ${a.instructions ? `<details style="margin-bottom:10px"><summary class="small">Instructions</summary><p class="small" style="margin:6px 0 0;white-space:pre-wrap">${esc(a.instructions)}</p></details>` : ''}
-    <div class="banner ${esc(a.rule)}"><span aria-hidden="true">${RULES[a.rule].icon}</span><span><b>${RULES[a.rule].label}</b>${a.rule !== 'prohibited' ? ` · ${esc(rolesText(a.roles))}` : ''}</span></div></div>`;
+    <div class="banner ${esc(a.rule)}">${ic(RULES[a.rule].icon)}<span><b>${RULES[a.rule].label}</b>${a.rule !== 'prohibited' ? ` · ${esc(rolesText(a.roles))}` : ''}</span></div></div>`;
 }
 
 /* ---- session + activity tracking (used by every sandbox step) ---- */
@@ -216,7 +244,7 @@ addRoute('student/work/:aid/:step?', {
     startSession(sub);
     const step = currentPath().split('/')[3];
     if (step === 'write') mountWrite(sub, a);
-    const gate = () => { const b = $('#nextBtn'); if (b) b.disabled = !stepDone(sub, a, step); };
+    const gate = () => updateGate(sub, a, step);
     $$('[data-bind]').forEach(el => el.addEventListener('input', () => {
       const path = el.dataset.bind.split('.');
       let o = sub; while (path.length > 1) o = o[path.shift()];
@@ -265,7 +293,6 @@ function stepWrite(sub, a) {
     ${unlabeled.length > 1 ? `<p class="small" style="margin-top:8px"><b>${unlabeled.length} pastes</b> still need a label. <button class="linkbtn" data-act="sbLabelAll" data-v="${a.id}">Label them</button></p>` : ''}
     <details class="card flat" style="margin-top:14px"><summary>Your process so far</summary>
       <ul class="tl" style="margin-top:10px">${timelineItems(sub).slice(-12).map(t => `<li class="${t.cls}"><time>${esc(fmtWhen(t.at))}</time>${t.html}</li>`).join('') || '<li>Nothing yet.</li>'}</ul></details>
-    <p class="tiny muted">20+ words to continue.</p>
     ${nextStepBtn(sub, a, 'write')}`;
 }
 function pastePrompt(i, p, a) {
@@ -297,7 +324,7 @@ function mountWrite(sub, a) {
     $('#wc').textContent = words(sub.text);
     $('#saveState').textContent = 'Saving…';
     saveSoon(sub);
-    const b = $('#nextBtn'); if (b) b.disabled = !stepDone(sub, a, 'write');
+    updateGate(sub, a, 'write');
   });
 }
 

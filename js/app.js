@@ -181,6 +181,7 @@ Object.assign(ACT, {
   closeDlg: () => closeDialog(),
   switchRole: () => { closeMenu(); DB.session = { role: null, studentId: null }; saveDB(); TIMER = null; go('start'); },
   signOut: () => { closeMenu(); DB.session = { role: null, studentId: null }; saveDB(); TIMER = null; go(''); },
+  scrollToEl: id => { const el = document.getElementById(id); if (!el) return; el.closest('section, form, .card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.tabIndex = -1; el.focus({ preventScroll: true }); },
   scrollTo: id => { if (currentPath() !== '') { go(''); setTimeout(() => document.getElementById(id)?.scrollIntoView(), 60); } else document.getElementById(id)?.scrollIntoView(); },
   toggleMenu: (v, btn) => {
     if ($('#menu')) return closeMenu();

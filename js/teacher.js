@@ -15,7 +15,7 @@ addRoute('teacher/setup', {
     ${muni('Hi! I’m Muni. Let’s get you set up.')}
     <h1>Your teacher space</h1>
     <form class="card" data-form="teacherSetup" novalidate>
-      <label class="field">Your name<input type="text" name="name" required maxlength="60" autocomplete="name" value="${esc(DB.teacher?.name || '')}" placeholder="Ms. Reyes"></label>
+      <label class="field">Your name<input type="text" name="name" required maxlength="60" autocomplete="name" value="${esc(DB.teacher?.name || '')}" placeholder="e.g. Ms. Reyes"></label>
       <label class="field">School <span class="hint">Optional</span><input type="text" name="school" maxlength="80" value="${esc(DB.teacher?.school || '')}"></label>
       <p class="err" id="setupErr" role="alert"></p>
       <button class="btn coral block">Continue</button>
@@ -139,8 +139,9 @@ function gettingStartedCard(classes, assignments, reviewed) {
   ];
   const trackableDone = items.filter(x => !x.guidance).every(x => x.done);
   const doneCount = items.filter(x => x.done).length;
+  const nextIdx = items.findIndex(x => !x.done && !x.guidance); // only the next step gets the primary button
   const details = trackableDone ? '' : ' open';
-  return `<section class="card get-started" aria-labelledby="h-start"><details${details}><summary><span><span class="eyebrow">Getting started</span><b id="h-start">${trackableDone ? "You're all set!" : 'Your classroom starts here.'}</b><span class="small muted">${trackableDone ? 'Your classroom is ready.' : 'Follow these steps to set up your class and start reviewing student work.'}</span></span><span class="get-started-count">${doneCount} of 3 complete</span></summary><div class="get-started-list">${items.map((x, i) => `<div class="get-started-item ${x.done ? 'complete' : ''}"><span class="get-started-mark" aria-label="${x.done ? 'Completed' : x.guidance ? 'Guidance' : 'Not completed'}">${x.done ? ic('check') : x.guidance ? ic('info') : i + 1}</span><div class="grow"><b>${x.title}</b><p>${x.desc}</p></div><button class="btn ${x.done ? 'ghost' : 'coral'} sm" data-act="${x.act}">${x.label}</button></div>`).join('')}</div></details></section>`;
+  return `<section class="card get-started" aria-labelledby="h-start"><details${details}><summary><span><span class="eyebrow">Getting started</span><b id="h-start">${trackableDone ? "You're all set!" : 'Your classroom starts here.'}</b><span class="small muted">${trackableDone ? 'Your classroom is ready.' : 'Follow these steps to set up your class and start reviewing student work.'}</span></span><span class="get-started-count">${doneCount} of 3 complete</span></summary><div class="get-started-list">${items.map((x, i) => `<div class="get-started-item ${x.done ? 'complete' : ''}"><span class="get-started-mark" aria-label="${x.done ? 'Completed' : x.guidance ? 'Guidance' : 'Not completed'}">${x.done ? ic('check') : x.guidance ? ic('info') : i + 1}</span><div class="grow"><b>${x.title}</b><p>${x.desc}</p></div>${x.done ? `<span class="chip g">${ic('check')} Done</span>` : `<button class="btn ${i === nextIdx ? 'coral' : 'ghost'} sm" data-act="${x.act}">${x.label}</button>`}</div>`).join('')}</div></details></section>`;
 }
 
 function classChoiceDialog(action, title) {
@@ -156,8 +157,8 @@ ACT.newClassDlg = () => openDialog(`
   <button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button>
   <h2>New class</h2>
   <form data-form="newClass" novalidate>
-    <label class="field">Class name<input type="text" name="name" required maxlength="60" placeholder="Grade 9 · Sampaguita"></label>
-    <label class="field">Subject<input type="text" name="subject" required maxlength="60" placeholder="Science 9" list="subjects"></label>
+    <label class="field">Class name<input type="text" name="name" required maxlength="60" placeholder="e.g. Grade 9 · Sampaguita"></label>
+    <label class="field">Subject<input type="text" name="subject" required maxlength="60" placeholder="e.g. Science 9" list="subjects"></label>
     <datalist id="subjects">${['Science 9', 'English 10', 'Mathematics 8', 'Araling Panlipunan 8', 'Oral Communication', 'Media and Information Literacy', 'Purposive Communication'].map(s => `<option value="${s}">`).join('')}</datalist>
     <label class="field">Grading system<select name="preset">${Object.entries(GRADING_PRESETS).map(([k, p]) => `<option value="${k}" ${k === 'deped-scimath' ? 'selected' : ''}>${esc(p.label)}</option>`).join('')}</select></label>
     <p class="err" id="classErr" role="alert"></p>
@@ -359,7 +360,7 @@ function assignmentForm(c, a) {
       ${used ? `<div class="banner required" style="margin-bottom:12px">${ic('triangle-alert')}<span>Students already submitted. Tell the class if you change the rule.</span></div>` : ''}
       <section class="card" aria-labelledby="h-a1">
         <h2 id="h-a1">Task</h2>
-        <label class="field">Title<input type="text" name="title" required maxlength="100" value="${esc(a.title)}" placeholder="How Climate Change Affects Cebu's Coasts"></label>
+        <label class="field">Title<input type="text" name="title" required maxlength="100" value="${esc(a.title)}" placeholder="e.g. How Climate Change Affects Cebu's Coasts"></label>
         <label class="field">Instructions <span class="hint">Optional</span><textarea name="instructions" rows="3" maxlength="2000">${esc(a.instructions)}</textarea></label>
         <div class="grid3">
           <label class="field">Due<input type="date" name="due" value="${esc(a.due)}"></label>
@@ -513,7 +514,8 @@ addRoute('teacher/review/:sid', {
     const LEGEND = [['typed', 'Typed'], ['mine', 'Own text / Think First'], ['source', 'Cited paste'], ['unlabeled', 'Unlabeled paste'], ['ai', 'AI paste']];
     return `
     <div class="pagehead"><div class="row"><span class="avatar" style="width:52px;height:52px;font-size:18px" aria-hidden="true">${esc(initials(stu.name))}</span>
-      <div><p class="eyebrow" style="margin:0">${esc(a.title)}</p><h1>${esc(stu.name)}</h1></div></div>${statusChip(sub)}</div>
+      <div><p class="eyebrow" style="margin:0">${esc(a.title)}</p><h1>${esc(stu.name)}</h1></div></div>
+      <div class="row">${statusChip(sub)}${isDraft ? '' : `<button class="btn coral sm jump-decide" data-act="scrollToEl" data-v="h-dc">${ic('arrow-down')} Decide</button>`}</div></div>
     <div class="chips">${sub.submittedAt ? `<span class="chip y">Submitted ${esc(fmtWhen(sub.submittedAt))}</span>` : ''}
       ${a.due && sub.submittedAt > new Date(a.due + 'T23:59:59').getTime() ? '<span class="chip r">Late</span>' : ''}<span class="chip">${ic(RULES[a.rule].icon)} ${RULES[a.rule].label}</span></div>
     ${isDraft ? `<div class="banner note" style="margin-bottom:16px">${ic('pencil')}<span>Still working. You can decide once they submit.</span></div>` : ''}
@@ -602,11 +604,21 @@ function gradePreview(sub, a, score) {
   if (score === '' || isNaN(n)) return comp ? `Goes to ${comp.name} (${comp.weight}%)` : '';
   return `${Math.round(clamp(n, 0, pts) / pts * 100)}%${comp ? ` · goes to ${comp.name} (${comp.weight}%)` : ''}`;
 }
+function currentDecisionText(sub, a) {
+  const r = sub.review;
+  if (sub.status === 'accepted') return `Accepted · ${esc(r.score)}/${esc(a.points)}`;
+  if (sub.status === 'followup') return 'Follow-up sent · waiting for the student';
+  if (sub.status === 'answered') return 'Follow-up answered · ready for your decision';
+  if (sub.status === 'concern') return 'Concern raised · waiting for the student';
+  if (sub.status === 'replied') return `Student replied${r.appeal ? ' and asked to appeal' : ''} · ready for your decision`;
+  return '';
+}
 function decisionCard(sub, a, rv, asks, fups) {
-  const d = rv.decision;
+  const d = rv.decision, now = sub.review.history.length ? currentDecisionText(sub, a) : '';
   return `
   <form class="card" data-form="decide" data-sid="${sub.id}" aria-labelledby="h-dc" novalidate>
-    <h2 id="h-dc" class="stephead"><span class="stepn">3</span>Decide</h2>
+    <h2 id="h-dc" class="stephead"><span class="stepn">3</span>${now ? 'Decision' : 'Decide'}</h2>
+    ${now ? `<div class="banner ${sub.status === 'accepted' ? 'ok' : NEEDS_TEACHER.includes(sub.status) ? 'note' : 'allowed'}" style="margin-bottom:12px">${ic(sub.status === 'accepted' ? 'circle-check' : 'info')}<span><b>Now:</b> ${now}${sub.status === 'accepted' ? '<br><span class="tiny">Pick an option below only if you want to change it.</span>' : ''}</span></div>` : ''}
     <div class="optgrid" role="radiogroup" aria-labelledby="h-dc">${[['accept', 'circle-check', 'Accept', 'green'], ['followup', 'message-circle', 'Follow up', 'blue'], ['concern', 'flag', 'Concern', 'red']]
       .map(([v, icn, l, tone]) => `<button type="button" class="opt" role="radio" aria-checked="${d === v}" data-act="rvDecision" data-v="${sub.id}:${v}" style="align-items:center">${badge(icn, tone, 'ico')}<b>${l}</b></button>`).join('')}</div>
     ${d === 'followup' ? '<p class="tiny muted" style="margin:8px 0 0">Grade waits for their answer.</p>' : d === 'concern' ? '<p class="tiny muted" style="margin:8px 0 0">They can reply or appeal.</p>' : ''}
@@ -621,7 +633,8 @@ function decisionCard(sub, a, rv, asks, fups) {
       ${asks.length ? asks.map(x => `<label class="check"><input type="checkbox" name="evidence" value="${esc(x.text)}" ${rv.evidence.includes(x.text) ? 'checked' : ''}> ${esc(x.text)}</label>`).join('') : '<p class="small muted">Nothing flagged. Describe what you saw.</p>'}
       <label class="field" style="margin-top:8px">Your concern<textarea name="concern" rows="4" maxlength="1500" placeholder="What you saw in the process, not a guess about AI.">${esc(rv.concern)}</textarea></label></fieldset>` : ''}
     <p class="err" id="dcErr" role="alert"></p>
-    <button class="btn coral lg block" style="margin-top:12px" ${d ? '' : 'disabled'}>Record decision</button>
+    ${d ? '' : '<p class="next-hint" style="margin-top:12px">Choose Accept, Follow up, or Concern to continue.</p>'}
+    <button class="btn coral lg block" style="margin-top:${d ? 12 : 8}px" ${d ? '' : 'disabled'}>${now ? 'Update decision' : 'Record decision'}</button>
   </form>`;
 }
 Object.assign(ACT, {
