@@ -91,7 +91,7 @@ function renderTopbar(route) {
   }
   const link = ([k, href, label, icn, n]) => `<a href="${href}" ${k === sec ? 'aria-current="page"' : ''}>${ic(icn)}${label}${n ? `<span class="count" aria-label="${n} new">${n}</span>` : ''}</a>`;
   $('#navlinks').innerHTML = signedIn ? links.map(link).join('')
-    : `<a href="#/" data-act="scrollTo" data-v="features">Features</a><a href="#/" data-act="scrollTo" data-v="how">How it works</a><a href="#/" data-act="scrollTo" data-v="tanong">T.A.N.O.N.G.</a>`;
+    : `<a href="#/" data-act="scrollTo" data-v="why">Why Muna</a><a href="#/" data-act="scrollTo" data-v="features">Features</a><a href="#/" data-act="scrollTo" data-v="how">How it works</a><a href="#/" data-act="scrollTo" data-v="faq">FAQ</a>`;
   $('#tabbar').innerHTML = signedIn ? links.map(([k, href, label, icn, n]) => `<a href="${href}" ${k === sec ? 'aria-current="page"' : ''}><span class="ti">${ic(icn)}</span>${label}${n ? `<span class="count">${n}</span>` : ''}</a>`).join('') : '';
   const name = role === 'teacher' ? DB.teacher?.name : stu?.name;
   $('#navright').innerHTML = `<span id="timer"></span>${themeButton()}` + (signedIn

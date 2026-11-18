@@ -17,6 +17,10 @@ addRoute('', {
         <a class="btn coral lg" href="#/start/teacher">I’m a teacher</a>
         <a class="btn ghost lg" href="#/start/student">I’m a student</a>
       </div>
+      <p class="hero-try">Just looking? <button class="linkbtn" data-act="loadSample">Open the sample class ${ic('arrow-right')}</button></p>
+      <ul class="hero-trust" aria-label="About this prototype">
+        <li>${ic('check')} Free, no sign-up</li><li>${ic('check')} Data stays in your browser</li><li>${ic('check')} Works on phones</li>
+      </ul>
     </section>
 
     <div class="wrap">
@@ -27,6 +31,33 @@ addRoute('', {
         <div class="float f4" aria-hidden="true"><span><i style="background:var(--coral)"></i>Typed</span><span><i style="background:var(--yellow)"></i>Pasted, cited</span><span><i style="background:var(--skydeep)"></i>AI, disclosed</span></div>
         ${phoneProcess()}
         ${phoneGame()}
+      </section>
+
+      <section class="section" id="why" aria-labelledby="w-h">
+        <h2 class="section-title center" id="w-h">Why not an AI detector?</h2>
+        <p class="section-lede center">Detectors guess. Muna shows you what happened, so you can ask the right question.</p>
+        <div class="compare">
+          <article class="cmp cmp-bad" aria-labelledby="cmp-a">
+            <p class="cmp-tag">AI detector</p>
+            <h3 id="cmp-a">A score with no reasons</h3>
+            <div class="cmp-gauge" aria-hidden="true"><b>73%</b><span>“Likely AI”</span></div>
+            <ul>
+              <li>${ic('x')} One number, no evidence behind it</li>
+              <li>${ic('x')} Flags honest students, especially second-language writers</li>
+              <li>${ic('x')} Students can’t explain or respond</li>
+            </ul>
+          </article>
+          <article class="cmp cmp-good" aria-labelledby="cmp-b">
+            <p class="cmp-tag">Muna</p>
+            <h3 id="cmp-b">The story of how it was made</h3>
+            <div class="cmp-bars" aria-hidden="true"><i style="height:30%"></i><i style="height:45%"></i><i style="height:62%"></i><i class="y" style="height:80%"></i><i class="y" style="height:100%"></i></div>
+            <ul>
+              <li>${ic('check')} Drafts, writing time, labeled pastes, and sources</li>
+              <li>${ic('check')} Questions made from the student’s own work</li>
+              <li>${ic('check')} Students can reply, and you make the final call</li>
+            </ul>
+          </article>
+        </div>
       </section>
 
       <section class="section" id="features" aria-labelledby="f-h">
@@ -44,7 +75,9 @@ addRoute('', {
           <article class="b-coral span-5">
             <h3>Process View</h3>
             <p>Drafts, pastes, sources, and time. Facts, not a % score.</p>
-            <div class="art" aria-hidden="true"><div class="mini-grid">
+            <div class="art" aria-hidden="true">
+              <div class="mini mini-chart"><span class="mc-label">How the work grew</span><span class="mc-bars"><i style="height:24%"></i><i style="height:36%"></i><i style="height:48%"></i><i class="y" style="height:66%"></i><i class="y" style="height:82%"></i><i class="y" style="height:100%"></i></span></div>
+              <div class="mini-grid">
               <div class="mini"><b>3</b>drafts</div><div class="mini"><b>1h 35m</b>writing</div><div class="mini"><b>2</b>sources</div></div></div>
           </article>
           <article class="b-sky span-5">
@@ -58,7 +91,7 @@ addRoute('', {
           <article class="b-yellow span-7">
             <h3>Evidence Game</h3>
             <p>A 10-minute class game. Inspect the cards, then decide.</p>
-            <div class="art" aria-hidden="true"><div class="verdict-row"><span>${ic('shield-check')} Supported</span><span>${ic('circle-help')} Unverified</span><span class="on">${ic('triangle-alert')} Misleading</span></div></div>
+            <div class="art" aria-hidden="true"><div class="mini mini-claim"><span class="ic" style="background:var(--badbg);color:var(--bad)">${ic('newspaper')}</span><span><b>“Walang pasok bukas!”</b><br>Shared 2.4K times · Is it true?</span></div><div class="verdict-row"><span>${ic('shield-check')} Supported</span><span>${ic('circle-help')} Unverified</span><span class="on">${ic('triangle-alert')} Misleading</span></div></div>
           </article>
         </div>
       </section>
@@ -66,18 +99,29 @@ addRoute('', {
       <section class="section" id="how" aria-labelledby="h-h">
         <h2 class="section-title center" id="h-h">Fair grading in four steps</h2>
         <p class="section-lede center">About five minutes per submission.</p>
-        <ol class="circles" style="list-style:none;padding:0;margin:0 auto">
-          <li class="circle c-coral"><span class="n">01</span><b>Set the rule</b><span>Teacher</span></li>
-          <li class="circle c-yellow"><span class="n">02</span><b>Think first</b><span>Student</span></li>
-          <li class="circle c-sky"><span class="n">03</span><b>See the process</b><span>Teacher</span></li>
-          <li class="circle c-navy"><span class="n">04</span><b>Decide fairly</b><span>Teacher</span></li>
+        <ol class="circles">
+          ${[['c-coral', 'Set the rule', 'Teacher', 'Choose if AI is off, limited to certain uses, or required.'],
+             ['c-yellow', 'Think first', 'Student', 'Students write what they already know before they search.'],
+             ['c-sky', 'See the process', 'Teacher', 'Drafts, pastes, sources, and answers in one view.'],
+             ['c-navy', 'Decide fairly', 'Teacher', 'Accept, ask a follow-up, or raise a concern they can answer.']]
+            .map(([c, t, who, d], i) => `<li><div class="circle ${c}"><span class="n">0${i + 1}</span><b>${t}</b><span>${who}</span></div><p>${d}</p></li>`).join('')}
         </ol>
       </section>
 
       <section class="section" id="tanong" aria-labelledby="t-h">
         <h2 class="section-title center" id="t-h">Six questions for any claim</h2>
         <p class="section-lede center">T.A.N.O.N.G. works in every subject.</p>
-        <div class="tanong-strip">${TANONG.map(([l, n]) => `<div><b>${l}</b><span>${n}</span></div>`).join('')}</div>
+        <ol class="tanong-strip">${TANONG.map(([l, n, q]) => `<li><b aria-hidden="true">${l}</b><span>${n}</span><small>${q}</small></li>`).join('')}</ol>
+      </section>
+
+      <section class="section" id="faq" aria-labelledby="q-h">
+        <h2 class="section-title center" id="q-h">Questions teachers ask</h2>
+        <div class="faq">
+          <details><summary>Does Muna tell me if a student used AI?${ic('chevron-down', 'chev')}</summary><p>No. Muna never gives a “% AI” score. It shows how the work was made and what the student says about it, so you can talk with them and decide.</p></details>
+          <details><summary>Where is the data saved?${ic('chevron-down', 'chev')}</summary><p>In this browser only. Nothing is sent to a server. To move work between devices, you export a file and import it on the other device.</p></details>
+          <details><summary>Do students need an account or email?${ic('chevron-down', 'chev')}</summary><p>No. Students join with a class code and their name.</p></details>
+          <details><summary>Can I use my DepEd grading system?${ic('chevron-down', 'chev')}</summary><p>Yes. Pick a DepEd preset (with transmutation) or set your own components and weights for each class.</p></details>
+        </div>
       </section>
 
       <section class="cta" aria-labelledby="cta-h">
@@ -88,8 +132,10 @@ addRoute('', {
       </section>
 
       <footer class="sitefoot">
-        <span class="brand"><img src="assets/wordmark.svg" alt="Muna"></span>
-        <span>Think First, Learn for Real · Prototype: your data stays in this browser.</span>
+        <div><span class="brand"><img src="assets/wordmark.svg" alt="Muna"></span><p>Think First, Learn for Real.<br>Prototype: your data stays in this browser.</p></div>
+        <nav class="footlinks" aria-label="Footer">
+          <a href="#/start/teacher">Teacher sign in</a><a href="#/start/student">Join a class</a><button class="linkbtn" data-act="loadSample">Sample class</button><a href="#/settings">Data &amp; export</a>
+        </nav>
       </footer>
     </div>`;
   }
