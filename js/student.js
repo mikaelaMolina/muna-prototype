@@ -73,15 +73,30 @@ addRoute('student', {
     ${games.length ? `<a class="card navy" href="#/student/game/${games[0].id}" style="display:flex;gap:14px;align-items:center;text-decoration:none">
       ${badge('gamepad-2', 'yellow', 'lg')}<span class="grow"><b style="font-size:17px">Evidence Game is live</b><br><span class="muted small">${esc(scenarioById(games[0].scenarioId)?.title || '')}</span></span><span class="codechip">${esc(games[0].code)}</span></a>` : ''}
     ${action.length ? `<h2>Needs your reply</h2><ul class="list" style="margin-bottom:24px">${action.map(row).join('')}</ul>` : ''}
-    ${all.length ? `<h2>To do</h2>
-      ${todo.length ? `<ul class="list" style="margin-bottom:24px">${todo.map(row).join('')}</ul>` : `<div class="empty small" style="margin-bottom:24px">${badge('party-popper', 'green', 'big')}You’re all caught up.</div>`}
+    ${all.length ? `<section data-tour="todo" style="margin-bottom:24px"><h2>To do</h2>
+      ${todo.length ? `<ul class="list">${todo.map(row).join('')}</ul>` : `<div class="empty small">${badge('party-popper', 'green', 'big')}You’re all caught up.</div>`}</section>
       ${turnedIn.length ? `<h2>Turned in</h2><ul class="list">${turnedIn.map(row).join('')}</ul>` : ''}`
-      : `<h2>Assignments</h2><div class="empty">${badge('book-open', 'coral', 'big')}No assignments yet. Your teacher’s assignments will show up here.</div>`}
+      : `<section data-tour="todo"><h2>Assignments</h2><div class="empty">${badge('book-open', 'coral', 'big')}No assignments yet. Your teacher’s assignments will show up here.</div></section>`}
     <details class="card flat" style="margin-top:24px"><summary>Join another class</summary>
       <form data-form="joinAnother" novalidate style="margin-top:12px"><div class="row top wrap"><label class="grow" style="min-width:160px"><span class="sr-only">Class code</span><input type="text" name="code" class="code" maxlength="9" placeholder="MUN-XXXX"></label><button class="btn" style="margin-top:6px">Join</button></div>
       <p class="err" id="anotherErr" role="alert"></p></form></details>`;
+  },
+  mount() {
+    const me = currentStudent();
+    if (TOUR || !(TOUR_REQUEST === 'student' || !me.tourDone)) return;
+    TOUR_REQUEST = null;
+    setTimeout(() => { if (currentPath() === 'student' && !TOUR) startStudentTour(); }, 250);
   }
 });
+function startStudentTour() {
+  const me = currentStudent();
+  startTour([
+    { title: `Hi ${esc(me.name.split(' ')[0])}! I’m Muni.`, body: 'Let me show you around. It only takes a moment.' },
+    { target: '[data-tour="todo"]', title: 'Your assignments', body: 'Tap one to start. Muna saves your work as you go.' },
+    { target: '#navlinks a[href="#/student/play"], #tabbar a[href="#/student/play"]', title: 'Evidence Game', body: 'When your teacher starts a game, join it here with the room code.' },
+    { target: '#meBtn', title: 'Need help later?', body: 'Replay this tour anytime from your profile menu.', doneLabel: 'Let’s go' }
+  ], () => { const s = currentStudent(); if (s) { s.tourDone = true; touch(s); saveDB(); } });
+}
 addRoute('student/play', {
   role: 'student',
   render() {

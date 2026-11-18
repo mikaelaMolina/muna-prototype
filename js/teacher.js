@@ -24,58 +24,30 @@ addRoute('teacher/setup', {
 FORM.teacherSetup = fd => {
   const name = String(fd.get('name') || '').trim();
   if (!name) { $('#setupErr').textContent = 'Please enter your name.'; $('input[name=name]').focus(); return; }
-  DB.teacher = { name, school: String(fd.get('school') || '').trim(), onboardingCompleted: false, onboardingDismissed: false, onboardingStep: 1 };
-  DB.session = { role: 'teacher', studentId: null }; saveDB(); go('teacher/onboarding');
+  DB.teacher = { name, school: String(fd.get('school') || '').trim(), tourDone: false };
+  DB.session = { role: 'teacher', studentId: null }; saveDB(); go('teacher');
 };
 
-/* ================================================================ first-time walkthrough */
-const ONBOARDING_STEPS = 4;
-const onboardingStep = () => clamp(Number(DB.teacher?.onboardingStep) || 1, 1, ONBOARDING_STEPS);
-const onboardingProgress = step => `<div class="walk-progress" aria-label="Walkthrough progress"><span>Step ${step} of ${ONBOARDING_STEPS}</span><div class="walk-dots">${Array.from({ length: ONBOARDING_STEPS }, (_, i) => `<i class="${i + 1 <= step ? 'on' : ''}" aria-hidden="true"></i>`).join('')}</div></div>`;
-
-function onboardingCard(step) {
-  if (step === 1) return `
-    <div class="walk-hero"><span class="walk-icon">${ic('sparkles')}</span><p class="eyebrow">A friendly introduction</p><h1>Welcome to Muna${DB.teacher?.name ? `, ${esc(DB.teacher.name)}` : ''}!</h1>
-      <p class="walk-lede">Muna helps you create assignments, understand how students develop their work, check their understanding, and make more informed grading decisions.</p>
-      <p>You don't need to be an AI expert to use Muna. We'll guide you through the basics.</p></div>
-    <div class="walk-note"><b>What Muna is—and is not</b><p>Muna gives you useful evidence about student work. It is not an AI detector and it is not a traditional learning management system.</p></div>`;
-  if (step === 2) return `
-    <p class="eyebrow">Your classroom workflow</p><h1>Start with a class and an assignment</h1><p class="walk-lede">First, create a class. Then make an assignment that tells students what to do and what to record along the way.</p>
-    <div class="walk-grid"><div class="walk-feature"><span>${ic('school')}</span><div><b>Class management</b><p>Keep each class, roster, assignments, and grades together.</p></div></div>
-      <div class="walk-feature"><span>${ic('file-text')}</span><div><b>Assignment creation</b><p>Set the task, due date, points, and grade category.</p></div></div>
-      <div class="walk-feature"><span>${ic('bot')}</span><div><b>AI-use rules</b><p>Choose whether AI is not allowed, limited to specific roles, or required.</p></div></div>
-      <div class="walk-feature"><span>${ic('message-circle-question')}</span><div><b>Understanding Checks</b><p>Students answer short questions about their own work so you can check understanding.</p></div></div></div>`;
-  if (step === 3) return `
-    <p class="eyebrow">How work moves through Muna</p><h1>Share assignments and receive student work</h1><p class="walk-lede">Muna currently moves work between devices using files. There is no automatic online sync yet.</p>
-    <ol class="walk-flow"><li><b>Download</b><span>You download the class file.</span></li><li><b>Send</b><span>Students import it and join with the class code.</span></li><li><b>Student work</b><span>Students complete assignments and export their work.</span></li><li><b>Import</b><span>You import returned work files for review.</span></li></ol>
-    <div class="walk-note"><b>Simple rule of thumb</b><p>Send the class file out; bring student work files back in.</p></div>`;
-  return `
-    <p class="eyebrow">Your review workflow</p><h1>Review work with context</h1><p class="walk-lede">When student work comes back, Muna helps you make a fair, informed decision.</p>
-    <div class="walk-review"><div><span class="stepn">1</span><b>Process View</b><p>See saved drafts, writing activity, recorded pasted text, and sources.</p></div><div><span class="stepn">2</span><b>Understanding Check</b><p>Review the student's explanations to check whether they understand the concepts.</p></div><div><span class="stepn">3</span><b>Teacher Decision</b><p>Accept and grade the work, ask a follow-up question, or raise a process concern.</p></div></div>
-    <div class="walk-note"><b>Important</b><p>Process information supports your judgment. It is not proof of authorship or AI misuse.</p></div>
-    <button class="linkbtn walk-sample" data-act="onboardingSample">Explore a sample submission</button>`;
+/* ================================================================ first-time spotlight tour
+   New teachers land on their real dashboard; a short tour points at the few things that matter.
+   It runs once (skip or finish both count) and can be replayed from the profile menu. */
+let TOUR_REQUEST = null; // 'teacher' | 'student': replay the tour when that home screen mounts
+const teacherTourDue = () => DB.teacher && !DB.teacher.tourDone && !DB.teacher.onboardingCompleted && !DB.teacher.onboardingDismissed;
+function startTeacherTour() {
+  const first = esc(String(DB.teacher?.name || '').trim());
+  startTour([
+    { title: `Welcome to Muna${first ? `, ${first}` : ''}!`, body: 'Here’s a quick look around. It takes about 30 seconds.' },
+    { target: '[data-tour="new-class"]', title: 'Start with a class', body: 'Make one class for each section you teach. Students join with its code.' },
+    { target: '.get-started', title: 'Your next step', body: 'This checklist always shows the one thing to do next.' },
+    { target: '#navlinks a[href="#/teacher/inbox"], #tabbar a[href="#/teacher/inbox"]', title: 'Student work lands here', body: 'See how each piece was made, check understanding, then decide.' },
+    { target: '#navlinks a[href="#/settings"], #tabbar a[href="#/settings"]', title: 'Your data stays on this device', body: 'Use Data to export a file and open it on another device.' },
+    { target: '#meBtn', title: 'Need a refresher?', body: 'Replay this tour anytime from your profile menu.', doneLabel: 'Start using Muna' }
+  ], () => { if (DB.teacher) { DB.teacher.tourDone = true; saveDB(); } });
 }
+// Old walkthrough links now open the dashboard with the tour.
+addRoute('teacher/onboarding/:step?', { role: 'teacher', render() { TOUR_REQUEST = 'teacher'; go('teacher'); return null; } });
 
-addRoute('teacher/onboarding/:step?', {
-  role: 'teacher', walkthrough: true,
-  render(p) {
-    const requested = p.step ? Number(p.step) : onboardingStep();
-    const step = clamp(Number.isFinite(requested) ? requested : onboardingStep(), 1, ONBOARDING_STEPS);
-    if (DB.teacher) { DB.teacher.onboardingStep = step; saveDB(); }
-    return `<div class="walkthrough"><div class="walk-top"><a class="brand" href="#/teacher" data-act="exitOnboarding"><img src="assets/wordmark.svg" alt="Muna home"></a>${onboardingProgress(step)}<button class="linkbtn" data-act="exitOnboarding">Exit</button></div>
-      <section class="walk-main" aria-label="Teacher onboarding"><div class="walk-card">${onboardingCard(step)}</div><div class="walk-actions">${step > 1 ? '<button class="btn ghost" data-act="onboardingBack">Back</button>' : '<span></span>'}<button class="btn coral" data-act="onboardingNext">${step === ONBOARDING_STEPS ? 'Go to My Teacher Dashboard' : 'Next'}</button></div></section></div>`;
-  }
-});
-
-ACT.onboardingNext = () => {
-  const step = onboardingStep();
-  if (!DB.teacher) return;
-  if (step < ONBOARDING_STEPS) { DB.teacher.onboardingStep = step + 1; saveDB(); go(`teacher/onboarding/${step + 1}`); return; }
-  DB.teacher.onboardingCompleted = true; DB.teacher.onboardingDismissed = false; DB.teacher.onboardingStep = ONBOARDING_STEPS; saveDB(); go('teacher');
-};
-ACT.onboardingBack = () => { const step = Math.max(1, onboardingStep() - 1); if (DB.teacher) { DB.teacher.onboardingStep = step; saveDB(); } go(`teacher/onboarding/${step}`); };
-ACT.exitOnboarding = () => { if (DB.teacher) { DB.teacher.onboardingDismissed = true; DB.teacher.onboardingStep = onboardingStep(); saveDB(); } go('teacher'); };
-ACT.onboardingSample = () => openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button><p class="eyebrow">Sample submission · not saved</p><h2>How the review fits together</h2><p class="small">A sample student might show three saved drafts, two sources, and answers to three Understanding Check questions.</p><div class="walk-sample-list"><div><b>Process View</b><span>Shows how the draft grew over time.</span></div><div><b>Understanding Check</b><span>Shows how clearly the student explains their own thinking.</span></div><div><b>Teacher Decision</b><span>Leaves the final judgment with you.</span></div></div><p class="tiny muted">This preview does not create or change classes, students, or submissions.</p><button class="btn coral block" data-act="closeDlg">Back to walkthrough</button>`, { wide: true });
+ACT.onboardingSample = () => openDialog(`<button class="iconbtn x" data-act="closeDlg" aria-label="Close">${ic('x')}</button><p class="eyebrow">Sample submission · not saved</p><h2>How a review works</h2><div class="walk-sample-list"><div><b>1 · Process View</b><span>How the draft grew over time.</span></div><div><b>2 · Understanding Check</b><span>The student explains their own work.</span></div><div><b>3 · Your decision</b><span>Accept, ask a follow-up, or raise a concern.</span></div></div><p class="tiny muted">Process information supports your judgment. It is not proof of AI use.</p><button class="btn coral block" data-act="loadSample">Open the sample class</button>`, { wide: true });
 
 /* ================================================================ dashboard */
 const pendingReviews = () => DB.submissions.filter(s => NEEDS_TEACHER.includes(s.status) && assignmentById(s.assignmentId)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
@@ -99,18 +71,15 @@ addRoute('teacher', {
     const students = new Set(DB.classes.flatMap(c => studentsInClass(c.id).map(s => s.id))).size;
     const actualClasses = actualTeacherClasses(), actualAssignments = actualTeacherAssignments(), reviewed = actualTeacherReviewed();
     const gettingStarted = gettingStartedCard(actualClasses, actualAssignments, reviewed);
-    const emptyHint = actualClasses.length && !actualAssignments.length ? `<section class="card dashboard-hint"><h2>Your class is ready for its first assignment</h2><p class="small muted">Assignments are activities students complete and return to you in Muna.</p><button class="btn coral sm" data-act="gettingStartedAssignment">Create your first assignment</button></section>`
-      : actualAssignments.length && !DB.submissions.some(s => { const a = assignmentById(s.assignmentId); const c = a && classById(a.classId); return a && c && !a.sample && !c.sample; }) ? `<section class="card dashboard-hint"><h2>Student work will appear here</h2><p class="small muted">When students return their work files, import them from your class's Share menu to start reviewing.</p><button class="btn ghost sm" data-act="gettingStartedShare">Learn how to share</button></section>` : '';
     return `
     <div class="pagehead"><div><p class="eyebrow">${esc(DB.teacher.school || 'Teacher')}</p><h1>Magandang araw, ${esc(DB.teacher.name)}</h1></div>
-      <button class="btn coral" data-act="newClassDlg">+ New class</button></div>
+      <button class="btn coral" data-act="newClassDlg" data-tour="new-class">+ New class</button></div>
     ${gettingStarted}
-    ${emptyHint}
-    <div class="bigstats">
+    ${DB.classes.length ? `<div class="bigstats">
       <a class="bigstat" href="#/teacher/inbox" style="background:var(--coral);color:#fff;text-decoration:none"><b>${pending.length}</b><span>to review</span></a>
       <div class="bigstat" style="background:var(--skybg)"><b>${students}</b><span>students</span></div>
       <div class="bigstat" style="background:var(--cream)"><b>${avg ? fmtDur(avg) : '–'}</b><span>avg. review</span></div>
-    </div>
+    </div>` : ''}
     ${pending.length ? `<section aria-labelledby="h-rev" style="margin-bottom:28px"><div class="row between"><h2 id="h-rev">Up next</h2>${pending.length > 3 ? '<a class="linkbtn" href="#/teacher/inbox">See all</a>' : ''}</div>
       <ul class="list">${pending.slice(0, 3).map(reviewItem).join('')}</ul></section>` : ''}
     <section aria-labelledby="h-cls">
@@ -124,25 +93,38 @@ addRoute('teacher', {
         }).join('')}
         <button class="tile add" data-act="newClassDlg"><span class="plus" aria-hidden="true">+</span>New class</button>
       </div>
-      ${DB.classes.length ? '' : '<div class="empty dashboard-empty"><p><b>Your classes are where assignments and student work are organized.</b></p><p class="small">Create your first class to get started.</p><button class="btn coral sm" data-act="newClassDlg">Create your first class</button></div>'}
     </section>`;
+  },
+  mount() {
+    if (TOUR || !(TOUR_REQUEST === 'teacher' || teacherTourDue())) return;
+    TOUR_REQUEST = null;
+    setTimeout(() => { if (currentPath() === 'teacher' && !TOUR) startTeacherTour(); }, 250);
   }
 });
 
+/* One compact card: a progress bar, the single next step, and the rest tucked away. */
 function gettingStartedCard(classes, assignments, reviewed) {
+  if (DB.teacher.gsHidden) return '';
   const hasSubmissions = DB.submissions.some(s => { const a = assignmentById(s.assignmentId), c = a && classById(a.classId); return a && c && !a.sample && !c.sample; });
   const items = [
-    { done: classes.length > 0, title: 'Create your first class', desc: 'Set up a class where you can organize students and assignments.', label: 'Create a class', act: 'newClassDlg' },
-    { done: assignments.length > 0, title: 'Create your first assignment', desc: 'Prepare an activity and decide how students can use AI.', label: 'Create an assignment', act: 'gettingStartedAssignment' },
-    { done: false, guidance: true, title: 'Share your class with students', desc: 'Download your class file and send it to your students. Muna cannot confirm sharing automatically.', label: 'Learn how to share', act: 'gettingStartedShare' },
-    { done: reviewed, title: 'Review your first submission', desc: 'Explore how Muna helps you review student work and understanding.', label: hasSubmissions ? 'Review a submission' : 'View sample submission', act: hasSubmissions ? 'gettingStartedReview' : 'onboardingSample' }
+    { done: classes.length > 0, title: 'Create a class', desc: 'One for each section you teach.', label: 'Create a class', act: 'newClassDlg' },
+    { done: assignments.length > 0, title: 'Post an assignment', desc: 'Set the task and how students may use AI.', label: 'Create an assignment', act: 'gettingStartedAssignment' },
+    { done: hasSubmissions, title: 'Share it with students', desc: 'Send them the class file and the class code.', label: 'Share class', act: 'gettingStartedShare' },
+    { done: reviewed, title: 'Review student work', desc: 'See how it was made, then decide.', label: hasSubmissions ? 'Review a submission' : 'See how a review works', act: hasSubmissions ? 'gettingStartedReview' : 'onboardingSample' }
   ];
-  const trackableDone = items.filter(x => !x.guidance).every(x => x.done);
-  const doneCount = items.filter(x => x.done).length;
-  const nextIdx = items.findIndex(x => !x.done && !x.guidance); // only the next step gets the primary button
-  const details = trackableDone ? '' : ' open';
-  return `<section class="card get-started" aria-labelledby="h-start"><details${details}><summary><span><span class="eyebrow">Getting started</span><b id="h-start">${trackableDone ? "You're all set!" : 'Your classroom starts here.'}</b><span class="small muted">${trackableDone ? 'Your classroom is ready.' : 'Follow these steps to set up your class and start reviewing student work.'}</span></span><span class="get-started-count">${doneCount} of 3 complete</span></summary><div class="get-started-list">${items.map((x, i) => `<div class="get-started-item ${x.done ? 'complete' : ''}"><span class="get-started-mark" aria-label="${x.done ? 'Completed' : x.guidance ? 'Guidance' : 'Not completed'}">${x.done ? ic('check') : x.guidance ? ic('info') : i + 1}</span><div class="grow"><b>${x.title}</b><p>${x.desc}</p></div>${x.done ? `<span class="chip g">${ic('check')} Done</span>` : `<button class="btn ${i === nextIdx ? 'coral' : 'ghost'} sm" data-act="${x.act}">${x.label}</button>`}</div>`).join('')}</div></details></section>`;
+  const doneCount = items.filter(x => x.done).length, next = items.find(x => !x.done);
+  const hide = `<button class="iconbtn gs-hide" data-act="hideGettingStarted" aria-label="Hide the getting started checklist" title="Hide">${ic('x')}</button>`;
+  if (!next) return `<section class="card get-started done" aria-label="Getting started">${badge('party-popper', 'green', 'ico')}<span class="grow"><b>You’re all set!</b><span class="small muted"> Your classroom is ready.</span></span>${hide}</section>`;
+  return `<section class="card get-started" aria-labelledby="h-start">
+    <div class="gs-head"><span class="grow"><span class="eyebrow">Getting started · ${doneCount} of ${items.length} done</span>
+      <b id="h-start">Next: ${next.title}</b></span>${hide}</div>
+    <div class="gs-bar" role="progressbar" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="${items.length}" aria-valuenow="${doneCount}"><i style="width:${doneCount / items.length * 100}%"></i></div>
+    <div class="gs-next"><p class="small muted">${next.desc}</p><button class="btn coral sm" data-act="${next.act}">${next.label}</button></div>
+    <details class="gs-all"><summary class="small">See all steps</summary>
+      <ol class="gs-list">${items.map(x => `<li class="${x.done ? 'complete' : x === next ? 'current' : ''}"><span class="get-started-mark">${x.done ? ic('check') : ''}</span><span class="grow">${x.title}${x.done ? '<span class="sr-only"> (done)</span>' : ''}</span>${!x.done && x !== next ? `<button class="linkbtn small" data-act="${x.act}">${x.label}</button>` : ''}</li>`).join('')}</ol>
+    </details></section>`;
 }
+ACT.hideGettingStarted = () => { DB.teacher.gsHidden = true; saveDB(); refresh(); toast('Checklist hidden. Bring it back from your profile menu.', 3500); };
 
 function classChoiceDialog(action, title) {
   const classes = actualTeacherClasses();
@@ -638,7 +620,6 @@ function decisionCard(sub, a, rv, asks, fups) {
   </form>`;
 }
 Object.assign(ACT, {
-  resumeOnboarding: () => { if (DB.teacher) { DB.teacher.onboardingDismissed = false; saveDB(); } go(`teacher/onboarding/${onboardingStep()}`); },
   rvSnap: v => { const [sid, i] = v.split(':'); RV[sid].snap = Number(i); refresh(); },
   rvRate: v => { const [sid, i, r] = v.split(':'); const sub = submissionById(sid); if (sub.review.ratings[i] === r) delete sub.review.ratings[i]; else sub.review.ratings[i] = r; touch(sub); saveDB(); refresh(); },
   rvDecision: v => { const [sid, d] = v.split(':'); RV[sid].decision = d; refresh(); },
